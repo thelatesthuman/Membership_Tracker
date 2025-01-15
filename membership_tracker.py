@@ -1,8 +1,10 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
+from tkinter import font
 from tkinter import messagebox
 from tkcalendar import DateEntry
+from datetime import datetime
 from db import Database
 
 class BusinessApp:
@@ -19,7 +21,14 @@ class BusinessApp:
         self.frm = ttk.Frame(root, padding=200)
         self.frm.grid()
 
-        self.title = ttk.Label(self.frm, text='')
+        bold_font = font.nametofont("TkDefaultFont")
+        bold_font.actual()["weight"] = "bold"
+
+
+        self.title = ttk.Label(self.frm, 
+                text='Alter Ego Comics & Games',
+                font=bold_font,
+                foreground='blue')
         self.title.grid(column=1, row=0)
 
         self.first_name_label = ttk.Label(self.frm, text='First Name')
@@ -59,7 +68,7 @@ class BusinessApp:
         search_frame = ttk.Frame(search_window, padding=100)
         search_frame.grid()
 
-        members = self.db.search_members(first_name, last_name, phone_number)
+        members = self.db.search_members(first_name.lower(), last_name.lower(), phone_number)
 
          # Clear previous results if any
         for widget in search_frame.winfo_children():
@@ -68,24 +77,79 @@ class BusinessApp:
 
         # Create a Treeview widget to display results
         columns = (
-                'ID',
+                'Member ID',
                 'First Name', 
                 'Last Name', 
                 'Phone Number', 
                 'Member Start', 
                 'Member Expire', 
-                'Store Credit')
+                'Store Credit',
+                'Active')
+
         tree = ttk.Treeview(search_frame, columns=columns, show="headings")
         tree.grid(column=0, row=4, columnspan=5)
+
+        tree.tag_configure('active', font=('Ariel', 10, 'bold'), foreground='green')
+        tree.tag_configure('not active', font=('Ariel', 10, 'bold'), foreground='red')
 
         for col in columns:
             tree.heading(col, text=col)
 
         for member in members:
-            tree.insert("", "end", values=member)
+            expire_date_str = str(member[5])
 
-        # Function to allow for data editing
-        def on_update():
+            expire_date = datetime.strptime(expire_date_str, '%Y-%m-%d')
+
+            if expire_date >= datetime.now():
+                active_status = 'ACTIVE'
+                status_tag = 'active'
+            else:
+                active_status = 'NOT ACTIVE'
+                status_tag = 'not active'
+
+            tree.insert("", "end", values=member + (active_status,), tags=(status_tag,))
+        
+        def on_transactions():
+            selected_item = tree.selection()
+            if not selected_item:
+                messagebox.showwarning("No selection", "Please select a member to check.")
+                return
+
+            selected_member = tree.item(selected_item)['values']
+            member_id = selected_member[0]
+
+            transactions_window = Toplevel(search_window)
+            transactions_window.title("Transaction History")
+
+            transactions_frame = ttk.Frame(transactions_window, padding=100)
+            transactions_frame.grid()
+
+            transactions = self.db.show_store_credit_transactions(member_id)
+
+            # Clear previous results if any
+            for widget in transactions_frame.winfo_children():
+                if isinstance(widget, ttk.Treeview):
+                    widget.destroy()
+
+            # Create a Treeview widget to display results
+            columns = (
+                    'Transaction ID',
+                    'Member ID',
+                    'Amount',
+                    'Transaction Date',
+                    'Description')
+        
+            tran_tree = ttk.Treeview(transactions_frame, columns=columns, show="headings")
+            tran_tree.grid(column=0, row=4, columnspan=5)
+        
+            for col in columns:
+                tran_tree.heading(col, text=col)
+            
+            for transaction in transactions:
+                tran_tree.insert("", "end", values=transaction)
+        
+
+        def on_update_credit():
             selected_item = tree.selection()
             if not selected_item:
                 messagebox.showwarning("No selection", "Please select a member to update.")
@@ -94,38 +158,109 @@ class BusinessApp:
             selected_member = tree.item(selected_item)['values']
             member_id = selected_member[0]
 
-            update_window = Toplevel(search_window)
-            update_window.title("Update Member Data")
+            update_credit_window = Toplevel(search_window)
+            update_credit_window.title("Update Member Credit")
 
-            update_frame = ttk.Frame(update_window, padding=10)
-            update_frame.grid()
+            update_credit_frame = ttk.Frame(update_credit_window, padding=100)
+            update_credit_frame.grid()
+            
+            update_amount_field = ttk.Label(update_credit_frame, 
+                    text="Update Amount: ")
+            update_amount_field.grid(column=0, row=0, sticky=W)
+            update_amount_entry = ttk.Entry(update_credit_frame)
+            update_amount_entry.grid(column=1, row=0)
+            
+            add_description_field = ttk.Label(update_credit_frame, 
+                    text="Add Description: ")
+            add_description_field.grid(column=0, row=1, sticky=W)
+            add_description_entry = ttk.Entry(update_credit_frame)
+            add_description_entry.grid(column=1, row=1)
 
-            update_first_name_entry = ttk.Entry(update_frame)
+            def apply_update():
+                updated_amount = update_amount_entry.get()
+                add_description = add_description_entry.get()
+
+                try:
+                    self.db.update_store_credit_transactions(
+                            member_id,
+                            updated_amount,
+                            add_description)
+                
+                    messagebox.showinfo("Success", "Member credit updated successfully!")
+                    update_credit_window.destroy()  
+                    self.on_search()  
+                    search_window.destroy()
+                
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to update credit: {e}")
+            
+            
+            update_credit_button = ttk.Button(update_credit_frame, 
+                    text="Update", 
+                    command=apply_update)
+            update_credit_button.grid(column=1, row=6)
+     
+
+        # Function to allow for data editing
+        def on_update_member():
+            selected_item = tree.selection()
+            if not selected_item:
+                messagebox.showwarning("No selection", "Please select a member to update.")
+                return
+
+            selected_member = tree.item(selected_item)['values']
+            member_id = selected_member[0]
+
+            update_member_window = Toplevel(search_window)
+            update_member_window.title("Update Member Data")
+
+            update_member_frame = ttk.Frame(update_member_window, padding=100)
+            update_member_frame.grid()
+
+            update_first_name_field = ttk.Label(update_member_frame, 
+                    text="First Name: ")
+            update_first_name_field.grid(column=0, row=0, sticky=W)
+            update_first_name_entry = ttk.Entry(update_member_frame)
             update_first_name_entry.insert(0, selected_member[1])
             update_first_name_entry.grid(column=1, row=0)
 
-            update_last_name_entry = ttk.Entry(update_frame)
+            update_last_name_field = ttk.Label(update_member_frame, 
+                    text="Last Name: ")
+            update_last_name_field.grid(column=0, row=1, sticky=W)
+            update_last_name_entry = ttk.Entry(update_member_frame)
             update_last_name_entry.insert(0, selected_member[2])
             update_last_name_entry.grid(column=1, row=1)
 
-            update_phone_number_entry = ttk.Entry(update_frame)
+            update_phone_number_field = ttk.Label(update_member_frame, 
+                    text="Phone Number: ")
+            update_phone_number_field.grid(column=0, row=2, sticky=W)
+            update_phone_number_entry = ttk.Entry(update_member_frame)
             update_phone_number_entry.insert(0, selected_member[3])
             update_phone_number_entry.grid(column=1, row=2)
             
             # Need to implement calendars for these inputs
             #update_member_start_entry = DateEntry(update_frame, date_pattern='yyyy-mm-dd')
-            update_member_start_entry = ttk.Entry(update_frame)
+            update_member_start_field = ttk.Label(update_member_frame, 
+                    text="Member Start: ")
+            update_member_start_field.grid(column=0, row=3, sticky=W)
+            update_member_start_entry = ttk.Entry(update_member_frame)
             update_member_start_entry.insert(0, selected_member[4])
             update_member_start_entry.grid(column=1, row=3)
 
             #update_member_expire_entry = DateEntry(update_frame, date_pattern='yyyy-mm-dd')
-            update_member_expire_entry = ttk.Entry(update_frame)
+            update_member_expire_field = ttk.Label(update_member_frame, 
+                    text="Member Expire: ")
+            update_member_expire_field.grid(column=0, row=4, sticky=W)
+            update_member_expire_entry = ttk.Entry(update_member_frame)
             update_member_expire_entry.insert(0, selected_member[5])
             update_member_expire_entry.grid(column=1, row=4)
 
-            update_store_credit_entry = ttk.Entry(update_frame)
-            update_store_credit_entry.insert(0, selected_member[6])
-            update_store_credit_entry.grid(column=1, row=5)
+            #update_store_credit_field = ttk.Label(update_member_frame, 
+            #        text="Store Credit: ")
+            #update_store_credit_field.grid(column=0, row=5, sticky=W)
+            #update_store_credit_entry = ttk.Entry(update_member_frame)
+            #update_store_credit_entry.insert(0, selected_member[6])
+            #update_store_credit_entry.grid(column=1, row=5)
 
             def apply_update():
                 updated_first_name = update_first_name_entry.get()
@@ -133,27 +268,28 @@ class BusinessApp:
                 updated_phone_number = update_phone_number_entry.get()
                 updated_member_start = update_member_start_entry.get()
                 updated_member_expire = update_member_expire_entry.get()
-                updated_store_credit = update_store_credit_entry.get()
+                #updated_store_credit = update_store_credit_entry.get()
 
                 try:
                     self.db.update_member(
                             member_id, 
-                            updated_first_name, 
-                            updated_last_name, 
+                            updated_first_name.lower(), 
+                            updated_last_name.lower(), 
                             updated_phone_number,
                             updated_member_start, 
-                            updated_member_expire, 
-                            updated_store_credit)
+                            updated_member_expire)
                     
                     messagebox.showinfo("Success", "Member data updated successfully!")
-                    update_window.destroy()  
+                    update_member_window.destroy()  
                     self.on_search()  
                     search_window.destroy()
                 
                 except Exception as e:
                     messagebox.showerror("Error", f"Failed to update member: {e}")
 
-            update_button = ttk.Button(update_frame, text="Update", command=apply_update)
+            update_button = ttk.Button(update_member_frame, 
+                    text="Update", 
+                    command=apply_update)
             update_button.grid(column=1, row=6)
 
         # Function to delete member data
@@ -183,8 +319,20 @@ class BusinessApp:
                     messagebox.showerror("Error", f"Failed to update member: {e}")
 
 
-        update_button = ttk.Button(search_frame, text="Update", command=on_update)
-        update_button.grid(column=4, row=5, columnspan=1, sticky='ew')
+        update_member_button = ttk.Button(search_frame, 
+                text="Update Member", 
+                command=on_update_member)
+        update_member_button.grid(column=4, row=5, columnspan=1, sticky='ew')
+        
+        update_credit_button = ttk.Button(search_frame, 
+                text="Update Credit", 
+                command=on_update_credit)
+        update_credit_button.grid(column=2, row=5, columnspan=1, sticky='ew')
+        
+        show_transactions_button = ttk.Button(search_frame, 
+                text="Transaction History", 
+                command=on_transactions)
+        show_transactions_button.grid(column=2, row=6, columnspan=1, sticky='ew')
 
         delete_button = ttk.Button(search_frame, text="Delete", command=on_delete)
         delete_button.grid(column=0, row=5, columnspan=1, sticky='ew')
@@ -240,8 +388,8 @@ class BusinessApp:
 
             try:    
                 self.db.add_member(
-                        first_name,
-                        last_name,
+                        first_name.lower(),
+                        last_name.lower(),
                         phone_number,
                         member_start,
                         member_expire,
