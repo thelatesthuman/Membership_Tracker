@@ -52,9 +52,9 @@ class BusinessApp:
         self.close_button = ttk.Button(self.frm, text='Close', command=self.root.destroy)
         self.close_button.grid(column=0, row=4)
 
-        self.new_window_button = ttk.Button(self.frm, text="Add Member", 
+        self.add_mem_window_button = ttk.Button(self.frm, text="Add Member", 
                 command=self.add_member_window)
-        self.new_window_button.grid(column=1, row=5)
+        self.add_mem_window_button.grid(column=1, row=5)
         
     # Function to search database and allow editing
     def on_search(self):
@@ -238,7 +238,7 @@ class BusinessApp:
             update_phone_number_entry.insert(0, selected_member[3])
             update_phone_number_entry.grid(column=1, row=2)
             
-            # Need to implement calendars for these inputs
+            # Maybe implement calendars for these inputs
             #update_member_start_entry = DateEntry(update_frame, date_pattern='yyyy-mm-dd')
             update_member_start_field = ttk.Label(update_member_frame, 
                     text="Member Start: ")
@@ -255,12 +255,6 @@ class BusinessApp:
             update_member_expire_entry.insert(0, selected_member[5])
             update_member_expire_entry.grid(column=1, row=4)
 
-            #update_store_credit_field = ttk.Label(update_member_frame, 
-            #        text="Store Credit: ")
-            #update_store_credit_field.grid(column=0, row=5, sticky=W)
-            #update_store_credit_entry = ttk.Entry(update_member_frame)
-            #update_store_credit_entry.insert(0, selected_member[6])
-            #update_store_credit_entry.grid(column=1, row=5)
 
             def apply_update():
                 updated_first_name = update_first_name_entry.get()
@@ -342,40 +336,40 @@ class BusinessApp:
 
 
     def add_member_window(self):
-        new_window = Toplevel(self.root)
-        new_window.title("Add Member")
+        add_mem_window = Toplevel(self.root)
+        add_mem_window.title("Add Member")
 
-        new_frame = ttk.Frame(new_window, padding=300)
-        new_frame.grid()
+        add_mem_frame = ttk.Frame(add_mem_window, padding=300)
+        add_mem_frame.grid()
 
-        first_name_field = ttk.Label(new_frame, text="First Name: ")
+        first_name_field = ttk.Label(add_mem_frame, text="First Name: ")
         first_name_field.grid(column=0, row=0, sticky=W)
-        first_name_entry = ttk.Entry(new_frame)
+        first_name_entry = ttk.Entry(add_mem_frame)
         first_name_entry.grid(column=1, row=0)
         
-        last_name_field = ttk.Label(new_frame, text="Last Name: ")
+        last_name_field = ttk.Label(add_mem_frame, text="Last Name: ")
         last_name_field.grid(column=0, row=1, sticky=W)
-        last_name_entry = ttk.Entry(new_frame)
+        last_name_entry = ttk.Entry(add_mem_frame)
         last_name_entry.grid(column=1, row=1)
 
-        phone_number_field = ttk.Label(new_frame, text="Phone Number: ")
+        phone_number_field = ttk.Label(add_mem_frame, text="Phone Number: ")
         phone_number_field.grid(column=0, row=2, sticky=W)
-        phone_number_entry = ttk.Entry(new_frame)
+        phone_number_entry = ttk.Entry(add_mem_frame)
         phone_number_entry.grid(column=1, row=2)
         
-        member_start_field = ttk.Label(new_frame, text="Member Start: ")
+        member_start_field = ttk.Label(add_mem_frame, text="Member Start: ")
         member_start_field.grid(column=0, row=3, sticky=W)
-        member_start_entry = DateEntry(new_frame, date_pattern='yyyy-mm-dd')
+        member_start_entry = DateEntry(add_mem_frame, date_pattern='yyyy-mm-dd')
         member_start_entry.grid(column=1, row=3)
         
-        member_expire_field = ttk.Label(new_frame, text="Member Expire: ")
+        member_expire_field = ttk.Label(add_mem_frame, text="Member Expire: ")
         member_expire_field.grid(column=0, row=4, sticky=W)
-        member_expire_entry = DateEntry(new_frame, date_pattern='yyyy-mm-dd')
+        member_expire_entry = DateEntry(add_mem_frame, date_pattern='yyyy-mm-dd')
         member_expire_entry.grid(column=1, row=4)
         
-        store_credit_field = ttk.Label(new_frame, text="Store Credit: ")
+        store_credit_field = ttk.Label(add_mem_frame, text="Store Credit: ")
         store_credit_field.grid(column=0, row=5, sticky=W)
-        store_credit_entry = ttk.Entry(new_frame)
+        store_credit_entry = ttk.Entry(add_mem_frame)
         store_credit_entry.grid(column=1, row=5)
         
         def on_submit():
@@ -409,11 +403,11 @@ class BusinessApp:
                 messagebox.showerror("Error", f"Failed to add member: {e}")
 
 
-        submit_button = ttk.Button(new_frame, text="Submit", command=on_submit)
+        submit_button = ttk.Button(add_mem_frame, text="Submit", command=on_submit)
         submit_button.grid(column=1, row=6)
 
-        close_button = ttk.Button(new_frame, text='Close', command=new_window.destroy)
-        close_button.grid(column=0, row=7)
+        close_button = ttk.Button(add_mem_frame, text='Close', command=add_mem_window.destroy)
+        close_button.grid(column=0, row=6)
 
 
 if __name__ == "__main__":
