@@ -1,13 +1,14 @@
+import os
 import psycopg2
 
 
 class Database:
-    def __init__(self, dbname, user, password, host='localhost', port='5432'):
-        self.dbname = dbname
-        self.user = user
-        self.password = password
-        self.host = host
-        self.port = port
+    def __init__(self):
+        self.dbname = os.getenv("DB_NAME")
+        self.user = os.getenv("DB_USER")
+        self.password = os.getenv("DB_PASS")
+        self.host = os.getenv("DB_HOST", "localhost")
+        self.port = os.getenv("DB_PORT", "5432")
 
 
     def connect(self):
@@ -133,3 +134,59 @@ class Database:
         VALUES (%s, %s, %s);""", (member_id, amount, description))
         conn.commit()
         conn.close()
+
+
+    def get_user_by_username(self, username):
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE username = %s;", (username,))
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
+        return user
+    
+
+    def create_user(self, username, hashed_password, salt, role):
+        conn = self.connect()
+        cur = conn.cursor()
+
+        try:
+            # Insert the new user into the database
+            cur.execute("""
+                INSERT INTO users (username, pass_hash, salt, role)
+                VALUES (%s, %s, %s, %s);
+            """, (username, hashed_password.decode('utf-8'), salt.decode('utf-8'), role))
+
+            conn.commit()
+        except psycopg2.IntegrityError:
+            conn.rollback()
+            print("Error: Username already exists!")
+        finally:
+            cur.close()
+            conn.close()
+    
+
+    # Check if there are users in the table
+    def are_users_exist(self):
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM users;")
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return count > 0
+
+
+    def get_user_role(self, username):
+            # This function checks the role of the user in the database
+            conn = self.connect()
+            cur = conn.cursor()
+            cur.execute("SELECT role FROM users WHERE username = %s", (username,))
+            role = cur.fetchone()
+            cur.close()
+            conn.close()
+            
+            if role:
+                return role[0]  # Return the role (e.g., 'admin' or 'user')
+            else:
+                return None  # User not found

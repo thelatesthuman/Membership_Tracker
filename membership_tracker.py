@@ -8,25 +8,22 @@ from datetime import datetime
 from db import Database
 
 class BusinessApp:
-    def __init__(self, root):
+    db = Database()
+    def __init__(self, root, current_user):
+        self.current_user = current_user
+        self.is_admin = self.db.get_user_role(self.current_user) == 'admin' 
+
         self.root = root
         self.root.title("Memberships")
         
-        # Setup Database
-        self.db = Database(
-                dbname="", 
-                user="", 
-                password="")
-
         self.frm = ttk.Frame(root, padding=200)
         self.frm.grid()
 
         bold_font = font.nametofont("TkDefaultFont")
         bold_font.actual()["weight"] = "bold"
-
-
+            
         self.title = ttk.Label(self.frm, 
-                text='Alter Ego Comics & Games',
+                text='Some Business',
                 font=bold_font,
                 foreground='blue')
         self.title.grid(column=1, row=0)
@@ -55,6 +52,15 @@ class BusinessApp:
         self.add_mem_window_button = ttk.Button(self.frm, text="Add Member", 
                 command=self.add_member_window)
         self.add_mem_window_button.grid(column=1, row=5)
+
+        self.create_user_button = None
+        if self.is_admin:
+            from auth import Authentication
+            auth = Authentication()
+            self.create_user_button = tk.Button(self.frm, 
+                    text="Create User", 
+                    command=auth.create_user_form)
+            self.create_user_button.grid(column=1, row=6)
         
     # Function to search database and allow editing
     def on_search(self):
@@ -406,11 +412,6 @@ class BusinessApp:
         submit_button = ttk.Button(add_mem_frame, text="Submit", command=on_submit)
         submit_button.grid(column=1, row=6)
 
-        close_button = ttk.Button(add_mem_frame, text='Close', command=add_mem_window.destroy)
+        close_button = ttk.Button(add_mem_frame, text='Close', 
+                command=add_mem_window.destroy)
         close_button.grid(column=0, row=6)
-
-
-if __name__ == "__main__":
-    root = Tk()
-    app = BusinessApp(root)
-    root.mainloop()
