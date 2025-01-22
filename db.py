@@ -190,3 +190,13 @@ class Database:
                 return role[0]  # Return the role (e.g., 'admin' or 'user')
             else:
                 return None  # User not found
+
+    # Search for all users
+    def search_all_members(self):
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM members;")
+        members = cur.fetchall()
+        cur.close()
+        conn.close()
+        return members
