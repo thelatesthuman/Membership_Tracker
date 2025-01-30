@@ -1,11 +1,14 @@
 import os
 import psycopg2
+from key_man import KeyManage
 
 
 class Database:
     def __init__(self):
+        #key_man = KeyManage()
         self.dbname = os.getenv("DB_NAME")
         self.user = os.getenv("DB_USER")
+        #self.password = key_man.decrypt_pass_linux()
         self.password = os.getenv("DB_PASS")
         self.host = os.getenv("DB_HOST", "localhost")
         self.port = os.getenv("DB_PORT", "5432")
@@ -40,7 +43,8 @@ class Database:
             phone_number, 
             member_start,
             member_expire,
-            store_credit):
+            store_credit,
+            membership_type):
         conn = self.connect()
         cur = conn.cursor()
         sql = """
@@ -51,9 +55,10 @@ class Database:
             phone_number, 
             member_start, 
             member_expire, 
-            store_credit
+            store_credit,
+            membership_type
         ) 
-        VALUES (%s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
         RETURNING member_id
     )
     INSERT INTO store_credit_transactions (member_id, amount, description)
@@ -68,6 +73,7 @@ class Database:
                 member_start, 
                 member_expire, 
                 store_credit,
+                membership_type,
                 store_credit)
         )
         conn.commit()
@@ -81,14 +87,16 @@ class Database:
             last_name, 
             phone_number, 
             member_start, 
-            member_expire):
+            member_expire,
+            membership_type):
         query = """
             UPDATE members
             SET first_name = %s,
                 last_name = %s,
                 phone_number = %s,
                 member_start = %s,
-                member_expire = %s
+                member_expire = %s,
+                membership_type = %s
             WHERE member_id = %s
         """
         conn = self.connect()
@@ -98,7 +106,8 @@ class Database:
             last_name, 
             phone_number, 
             member_start, 
-            member_expire,  
+            member_expire,
+            membership_type,
             member_id))
         conn.commit()
 

@@ -6,7 +6,8 @@ CREATE TABLE members (
     phone_number VARCHAR(20),
     member_start DATE,
     member_expire DATE,
-    store_credit NUMERIC(10, 2)
+    store_credit NUMERIC(10, 2),
+    membership_type VARCHAR(20)
 );
 
 -- Create Store Credit Transactions table
