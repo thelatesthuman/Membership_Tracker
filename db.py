@@ -1,6 +1,5 @@
 import os
 import psycopg2
-from key_man import KeyManage
 
 
 class Database:
