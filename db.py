@@ -1,14 +1,19 @@
 import os
 import psycopg2
+from crypto import KeyManage, Crypto
 
 
 class Database:
     def __init__(self):
-        #key_man = KeyManage()
+        key_man = KeyManage()
+        key = key_man.load_key("encryption.key")
+        crypto = Crypto()
+
+
         self.dbname = os.getenv("DB_NAME")
         self.user = os.getenv("DB_USER")
-        #self.password = key_man.decrypt_pass_linux()
-        self.password = os.getenv("DB_PASS")
+        self.password = crypto.decrypt_password(os.getenv("DB_PASS"), key)
+        #self.password = os.getenv("DB_PASS")
         self.host = os.getenv("DB_HOST", "localhost")
         self.port = os.getenv("DB_PORT", "5432")
 
