@@ -254,7 +254,7 @@ class BusinessApp:
     def display_members(self, members):
         for member in members:
             expire_date_str = str(member[5])
-
+            
             expire_date = datetime.strptime(expire_date_str, '%Y-%m-%d')
 
             if expire_date >= datetime.now():
@@ -453,20 +453,19 @@ class BusinessApp:
         update_phone_number_entry.insert(0, selected_member[3])
         update_phone_number_entry.grid(column=1, row=2)
         
-        # Maybe implement calendars for these inputs
-        #update_member_start_entry = DateEntry(update_frame, date_pattern='yyyy-mm-dd')
         update_member_start_field = ttk.Label(update_member_frame, 
                 text="Member Start: ")
         update_member_start_field.grid(column=0, row=3, sticky=W)
-        update_member_start_entry = ttk.Entry(update_member_frame)
+        update_member_start_entry = DateEntry(update_member_frame, date_pattern='yyyy-mm-dd')
+        update_member_start_entry.delete(0, 'end')
         update_member_start_entry.insert(0, selected_member[4])
         update_member_start_entry.grid(column=1, row=3)
 
-        #update_member_expire_entry = DateEntry(update_frame, date_pattern='yyyy-mm-dd')
         update_member_expire_field = ttk.Label(update_member_frame, 
                 text="Member Expire: ")
         update_member_expire_field.grid(column=0, row=4, sticky=W)
-        update_member_expire_entry = ttk.Entry(update_member_frame)
+        update_member_expire_entry = DateEntry(update_member_frame, date_pattern='yyyy-mm-dd')
+        update_member_expire_entry.delete(0, 'end')
         update_member_expire_entry.insert(0, selected_member[5])
         update_member_expire_entry.grid(column=1, row=4)
 
