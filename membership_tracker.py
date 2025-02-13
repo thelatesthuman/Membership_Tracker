@@ -45,17 +45,22 @@ class BusinessApp:
 
         self.search_button = ttk.Button(self.frm, text='Search', command=self.on_search)
         self.search_button.grid(column=1, row=4)
-        
+        self.search_button.bind('<Return>', lambda event: self.on_search())
+
         self.search_all_button = ttk.Button(self.frm, text='Search All', 
                 command=self.on_search_all)
         self.search_all_button.grid(column=2, row=4)
+        self.search_all_button.bind('<Return>', lambda event: self.on_search_all())
         
         self.close_button = ttk.Button(self.frm, text='Close', command=self.root.destroy)
         self.close_button.grid(column=0, row=4)
+        self.close_button.bind('<Return>', lambda event: self.root.destroy())
 
         self.add_mem_window_button = ttk.Button(self.frm, text="Add Member", 
                 command=self.add_member_window)
         self.add_mem_window_button.grid(column=1, row=5)
+        self.add_mem_window_button.bind('<Return>', lambda event: self.add_member_window())
+
 
         self.create_user_button = None
         if self.is_admin:
@@ -133,7 +138,7 @@ class BusinessApp:
                                                    "standard"],
                                                state="readonly")
         self.membership_filter.set("All Memberships")
-        self.membership_filter.place(x=1070, y=0)
+        self.membership_filter.place(x=1275, y=0)
 
         self.active_filter = ttk.Combobox(self.search_frame,
                                           values=[
@@ -155,10 +160,11 @@ class BusinessApp:
 
         # Create a Treeview widget to display results
         columns = (
-                'Member Id',
+                'Member ID',
                 'First Name', 
                 'Last Name', 
-                'Phone Number', 
+                'Phone Number',
+                'Email',
                 'Member Start', 
                 'Member Expire', 
                 'Store Credit',
@@ -199,24 +205,29 @@ class BusinessApp:
                 text="Update Member", 
                 command=self.on_update_member)
         update_member_button.grid(column=4, row=5, columnspan=1, sticky='ew')
-        
+        update_member_button.bind('<Return>', lambda event: self.on_update_member())
+
         update_credit_button = ttk.Button(self.search_frame, 
                 text="Update Credit", 
                 command=self.on_update_credit)
         update_credit_button.grid(column=2, row=5, columnspan=1, sticky='ew')
-        
+        update_credit_button.bind('<Return>', lambda event: self.on_update_credit())
+
         show_transactions_button = ttk.Button(self.search_frame, 
                 text="Transaction History", 
                 command=self.on_transactions)
         show_transactions_button.grid(column=2, row=6, columnspan=1, sticky='ew')
+        show_transactions_button.bind('<Return>', lambda event: self.on_transactions())
 
         delete_button = ttk.Button(self.search_frame, text="Delete", 
                 command=self.on_delete)
         delete_button.grid(column=0, row=5, columnspan=1, sticky='ew')
-        
+        delete_button.bind('<Return>', lambda event: self.on_delete())
+
         close_button = ttk.Button(self.search_frame, text='Close', 
                 command=self.search_window.destroy)
         close_button.grid(column=4, row=6, columnspan=1, sticky='ew')
+        close_button.bind('<Return>', lambda event: self.search_window.destroy())
 
 
     def apply_filters(self, event=None):
@@ -246,14 +257,14 @@ class BusinessApp:
 
     def is_active(self, member):
         """Check if the member is active based on the expire date"""
-        expire_date_str = str(member[5])
+        expire_date_str = str(member[6])
         expire_date = datetime.strptime(expire_date_str, '%Y-%m-%d')
         return expire_date >= datetime.now()
 
-
+    # This is were filtered data is officially displayed
     def display_members(self, members):
         for member in members:
-            expire_date_str = str(member[5])
+            expire_date_str = str(member[6])
             
             expire_date = datetime.strptime(expire_date_str, '%Y-%m-%d')
 
@@ -414,7 +425,7 @@ class BusinessApp:
                 text="Update", 
                 command=apply_update)
         update_credit_button.grid(column=1, row=6)
- 
+        update_credit_button.bind('<Return>', lambda event: apply_update())
 
     # Function to allow for data editing
     def on_update_member(self):
@@ -453,34 +464,44 @@ class BusinessApp:
         update_phone_number_entry.insert(0, selected_member[3])
         update_phone_number_entry.grid(column=1, row=2)
         
+        update_email_field = ttk.Label(update_member_frame, 
+                text="Email: ")
+        update_email_field.grid(column=0, row=3, sticky=W)
+        update_email_entry = ttk.Entry(update_member_frame)
+        update_email_entry.insert(0, selected_member[4])
+        update_email_entry.grid(column=1, row=3)
+        
         update_member_start_field = ttk.Label(update_member_frame, 
                 text="Member Start: ")
-        update_member_start_field.grid(column=0, row=3, sticky=W)
-        update_member_start_entry = DateEntry(update_member_frame, date_pattern='yyyy-mm-dd')
+        update_member_start_field.grid(column=0, row=4, sticky=W)
+        update_member_start_entry = DateEntry(update_member_frame, 
+                date_pattern='yyyy-mm-dd')
         update_member_start_entry.delete(0, 'end')
-        update_member_start_entry.insert(0, selected_member[4])
-        update_member_start_entry.grid(column=1, row=3)
+        update_member_start_entry.insert(0, selected_member[5])
+        update_member_start_entry.grid(column=1, row=4)
 
         update_member_expire_field = ttk.Label(update_member_frame, 
                 text="Member Expire: ")
-        update_member_expire_field.grid(column=0, row=4, sticky=W)
-        update_member_expire_entry = DateEntry(update_member_frame, date_pattern='yyyy-mm-dd')
+        update_member_expire_field.grid(column=0, row=5, sticky=W)
+        update_member_expire_entry = DateEntry(update_member_frame, 
+                date_pattern='yyyy-mm-dd')
         update_member_expire_entry.delete(0, 'end')
-        update_member_expire_entry.insert(0, selected_member[5])
-        update_member_expire_entry.grid(column=1, row=4)
+        update_member_expire_entry.insert(0, selected_member[6])
+        update_member_expire_entry.grid(column=1, row=5)
 
         update_member_type_field = ttk.Label(update_member_frame, 
                 text="Membership Type: ")
-        update_member_type_field.grid(column=0, row=5, sticky=W)
+        update_member_type_field.grid(column=0, row=6, sticky=W)
         update_member_type_entry = ttk.Entry(update_member_frame)
-        update_member_type_entry.insert(0, selected_member[7])
-        update_member_type_entry.grid(column=1, row=5)
+        update_member_type_entry.insert(0, selected_member[8])
+        update_member_type_entry.grid(column=1, row=6)
 
 
         def apply_update():
             updated_first_name = update_first_name_entry.get()
             updated_last_name = update_last_name_entry.get()
             updated_phone_number = update_phone_number_entry.get()
+            updated_email = update_email_entry.get()
             updated_member_start = update_member_start_entry.get()
             updated_member_expire = update_member_expire_entry.get()
             updated_member_type = update_member_type_entry.get()
@@ -491,6 +512,7 @@ class BusinessApp:
                         updated_first_name.lower(), 
                         updated_last_name.lower(), 
                         updated_phone_number,
+                        updated_email,
                         updated_member_start, 
                         updated_member_expire,
                         updated_member_type.lower())
@@ -509,7 +531,8 @@ class BusinessApp:
         update_button = ttk.Button(update_member_frame, 
                 text="Update", 
                 command=apply_update)
-        update_button.grid(column=1, row=6)
+        update_button.grid(column=1, row=7)
+        update_button.bind('<Return>', lambda event: apply_update())
 
     # Function to delete member data
     def on_delete(self):
@@ -563,30 +586,36 @@ class BusinessApp:
         phone_number_entry = ttk.Entry(add_mem_frame)
         phone_number_entry.grid(column=1, row=2)
         
+        email_field = ttk.Label(add_mem_frame, text="Email: ")
+        email_field.grid(column=0, row=3, sticky=W)
+        email_entry = ttk.Entry(add_mem_frame)
+        email_entry.grid(column=1, row=3)
+        
         member_start_field = ttk.Label(add_mem_frame, text="Member Start: ")
-        member_start_field.grid(column=0, row=3, sticky=W)
+        member_start_field.grid(column=0, row=4, sticky=W)
         member_start_entry = DateEntry(add_mem_frame, date_pattern='yyyy-mm-dd')
-        member_start_entry.grid(column=1, row=3)
+        member_start_entry.grid(column=1, row=4)
         
         member_expire_field = ttk.Label(add_mem_frame, text="Member Expire: ")
-        member_expire_field.grid(column=0, row=4, sticky=W)
+        member_expire_field.grid(column=0, row=5, sticky=W)
         member_expire_entry = DateEntry(add_mem_frame, date_pattern='yyyy-mm-dd')
-        member_expire_entry.grid(column=1, row=4)
+        member_expire_entry.grid(column=1, row=5)
         
         store_credit_field = ttk.Label(add_mem_frame, text="Store Credit: ")
-        store_credit_field.grid(column=0, row=5, sticky=W)
+        store_credit_field.grid(column=0, row=6, sticky=W)
         store_credit_entry = ttk.Entry(add_mem_frame)
-        store_credit_entry.grid(column=1, row=5)
+        store_credit_entry.grid(column=1, row=6)
        
         member_type_field = ttk.Label(add_mem_frame, text="Membership Type: ")
-        member_type_field.grid(column=0, row=6, sticky=W)
+        member_type_field.grid(column=0, row=7, sticky=W)
         member_type_entry = ttk.Entry(add_mem_frame)
-        member_type_entry.grid(column=1, row=6)
+        member_type_entry.grid(column=1, row=7)
 
         def on_submit():
             first_name = first_name_entry.get()
             last_name = last_name_entry.get()
             phone_number = phone_number_entry.get()
+            email = email_entry.get()
             member_start = member_start_entry.get()
             member_expire = member_expire_entry.get()
             store_credit = store_credit_entry.get()
@@ -597,6 +626,7 @@ class BusinessApp:
                         first_name.lower(),
                         last_name.lower(),
                         phone_number,
+                        email,
                         member_start,
                         member_expire,
                         store_credit,
@@ -608,6 +638,7 @@ class BusinessApp:
                 first_name_entry.delete(0, tk.END)
                 last_name_entry.delete(0, tk.END)
                 phone_number_entry.delete(0, tk.END)
+                email_entry.delete(0, tk.END)
                 member_start_entry.delete(0, tk.END)
                 member_expire_entry.delete(0, tk.END)
                 store_credit_entry.delete(0, tk.END)
@@ -618,9 +649,10 @@ class BusinessApp:
 
 
         submit_button = ttk.Button(add_mem_frame, text="Submit", command=on_submit)
-        submit_button.grid(column=1, row=7)
+        submit_button.grid(column=1, row=8)
+        submit_button.bind('<Return>', lambda event: on_submit())
 
         close_button = ttk.Button(add_mem_frame, text='Close', 
                 command=add_mem_window.destroy)
-        close_button.grid(column=0, row=7)
-
+        close_button.grid(column=0, row=8)
+        close_button.bind('<Return>', lambda even: add_mem_window.destroy())

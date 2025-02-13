@@ -13,7 +13,6 @@ class Database:
         self.dbname = os.getenv("DB_NAME")
         self.user = os.getenv("DB_USER")
         self.password = crypto.decrypt_password(os.getenv("DB_PASS"), key)
-        #self.password = os.getenv("DB_PASS")
         self.host = os.getenv("DB_HOST", "localhost")
         self.port = os.getenv("DB_PORT", "5432")
 
@@ -44,7 +43,8 @@ class Database:
             self, 
             first_name, 
             last_name, 
-            phone_number, 
+            phone_number,
+            email,
             member_start,
             member_expire,
             store_credit,
@@ -56,13 +56,14 @@ class Database:
         INSERT INTO members (
             first_name, 
             last_name, 
-            phone_number, 
+            phone_number,
+            email,
             member_start, 
             member_expire, 
             store_credit,
             membership_type
         ) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING member_id
     )
     INSERT INTO store_credit_transactions (member_id, amount, description)
@@ -73,7 +74,8 @@ class Database:
             (
                 first_name, 
                 last_name, 
-                phone_number, 
+                phone_number,
+                email,
                 member_start, 
                 member_expire, 
                 store_credit,
@@ -89,7 +91,8 @@ class Database:
             member_id,
             first_name, 
             last_name, 
-            phone_number, 
+            phone_number,
+            email,
             member_start, 
             member_expire,
             membership_type):
@@ -98,6 +101,7 @@ class Database:
             SET first_name = %s,
                 last_name = %s,
                 phone_number = %s,
+                email = %s,
                 member_start = %s,
                 member_expire = %s,
                 membership_type = %s
@@ -108,7 +112,8 @@ class Database:
         cur.execute(query, (
             first_name, 
             last_name, 
-            phone_number, 
+            phone_number,
+            email,
             member_start, 
             member_expire,
             membership_type,

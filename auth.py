@@ -88,6 +88,7 @@ class Authentication:
         entry_password.pack(padx=10, pady=5)
 
         tk.Button(root, text="Login", command=login_action).pack(padx=10, pady=20)
+        root.bind('<Return>', lambda event: login_action())
         root.mainloop()
 
 

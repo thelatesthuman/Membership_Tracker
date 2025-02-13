@@ -4,6 +4,7 @@ CREATE TABLE members (
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     phone_number VARCHAR(20),
+    email VARCHAR(100),
     member_start DATE,
     member_expire DATE,
     store_credit NUMERIC(10, 2),
