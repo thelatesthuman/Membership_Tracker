@@ -15,9 +15,18 @@ class BusinessApp:
 
         self.root = root
         self.root.title("Memberships")
-        
+       
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+
         self.frm = ttk.Frame(root, padding=200)
-        self.frm.grid()
+        self.frm.grid(sticky="nsew")
+
+        for i in range(7):
+            self.frm.grid_rowconfigure(i, weight=1)
+        
+        for i in range(3):
+            self.frm.grid_columnconfigure(i, weight=1)
 
         bold_font = font.nametofont("TkDefaultFont")
         bold_font.actual()["weight"] = "bold"
@@ -31,36 +40,36 @@ class BusinessApp:
         self.first_name_label = ttk.Label(self.frm, text='First Name')
         self.first_name_label.grid(column=0, row=1, sticky=W)
         self.first_name_entry = ttk.Entry(self.frm)
-        self.first_name_entry.grid(column=1, row=1)
+        self.first_name_entry.grid(column=1, row=1, sticky="ew")
 
         self.last_name_label = ttk.Label(self.frm, text='Last Name')
         self.last_name_label.grid(column=0, row=2, sticky=W)
         self.last_name_entry = ttk.Entry(self.frm)
-        self.last_name_entry.grid(column=1, row=2)
+        self.last_name_entry.grid(column=1, row=2, sticky="ew")
 
         self.phone_number_label = ttk.Label(self.frm, text='Phone Number')
         self.phone_number_label.grid(column=0, row=3, sticky=W)
         self.phone_number_entry = ttk.Entry(self.frm)
-        self.phone_number_entry.grid(column=1, row=3)
+        self.phone_number_entry.grid(column=1, row=3, sticky="ew")
 
         self.search_button = ttk.Button(self.frm, text='Search', command=self.on_search)
-        self.search_button.grid(column=1, row=4)
+        self.search_button.grid(column=1, row=4, sticky="ew")
         self.search_button.bind('<Return>', lambda event: self.on_search())
 
         self.search_all_button = ttk.Button(self.frm, text='Search All', 
                 command=self.on_search_all)
-        self.search_all_button.grid(column=2, row=4)
+        self.search_all_button.grid(column=2, row=4, sticky="ew")
         self.search_all_button.bind('<Return>', lambda event: self.on_search_all())
         
         self.close_button = ttk.Button(self.frm, text='Close', command=self.root.destroy)
-        self.close_button.grid(column=0, row=4)
+        self.close_button.grid(column=0, row=4, sticky="ew")
         self.close_button.bind('<Return>', lambda event: self.root.destroy())
 
         self.add_mem_window_button = ttk.Button(self.frm, text="Add Member", 
                 command=self.add_member_window)
-        self.add_mem_window_button.grid(column=1, row=5)
+        self.add_mem_window_button.grid(column=1, row=5, sticky="ew")
         self.add_mem_window_button.bind('<Return>', lambda event: self.add_member_window())
-
+        
 
         self.create_user_button = None
         if self.is_admin:
@@ -69,7 +78,7 @@ class BusinessApp:
             self.create_user_button = tk.Button(self.frm, 
                     text="Create User", 
                     command=auth.create_user_form)
-            self.create_user_button.grid(column=1, row=6) 
+            self.create_user_button.grid(column=1, row=6, sticky="ew") 
         
         self.search_all_flag = False
 
@@ -92,7 +101,7 @@ class BusinessApp:
     #        self.root.clipboard_clear()
     #        self.root.clipboard_append(text_to_copy)
     #        self.root.update()
-
+        
 
     def on_search(self):
         first_name = self.first_name_entry.get()
@@ -116,10 +125,17 @@ class BusinessApp:
 
         self.search_window = Toplevel(self.root)
         self.search_window.title("Member Info")
-        
-        self.search_frame = ttk.Frame(self.search_window, padding=100)
-        self.search_frame.grid()
+        self.search_window.geometry("1700x500")
+
+        self.search_window.grid_rowconfigure(0, weight=1)
+        self.search_window.grid_columnconfigure(0, weight=1)
+
+        self.search_frame = ttk.Frame(self.search_window, padding=10)
+        self.search_frame.grid(sticky="nsew")
        
+        self.search_frame.grid_rowconfigure(0, weight=1)
+        self.search_frame.grid_columnconfigure(0, weight=1)
+
         self.search_all_flag = search_all
 
         if search_all == False:
@@ -130,7 +146,7 @@ class BusinessApp:
         else:
             members = self.db.search_all_members()
 
-# Create dropdowns for membership type and active status
+        # Create dropdowns for membership type and active status
         self.membership_filter = ttk.Combobox(self.search_frame,
                                                values=[
                                                    "All Memberships", 
@@ -138,7 +154,7 @@ class BusinessApp:
                                                    "standard"],
                                                state="readonly")
         self.membership_filter.set("All Memberships")
-        self.membership_filter.place(x=1275, y=0)
+        self.membership_filter.grid(column=4, row=1, sticky='w')
 
         self.active_filter = ttk.Combobox(self.search_frame,
                                           values=[
@@ -172,18 +188,25 @@ class BusinessApp:
                 'Active')
 
         self.tree = ttk.Treeview(self.search_frame, columns=columns, show="headings")
-        self.tree.grid(column=0, row=4, columnspan=5)
+        self.tree.grid(column=0, row=4, columnspan=5, sticky="nsew")
+
+        self.search_frame.grid_rowconfigure(4, weight=1)
+        self.search_frame.grid_columnconfigure(0, weight=1)
+        self.search_frame.grid_columnconfigure(1, weight=1)
+        self.search_frame.grid_columnconfigure(2, weight=1)
+        self.search_frame.grid_columnconfigure(3, weight=1)
+        self.search_frame.grid_columnconfigure(4, weight=1)
 
         self.tree.tag_configure('active', font=('Ariel', 10, 'bold'), foreground='green')
         self.tree.tag_configure('not active', font=('Ariel', 10, 'bold'), foreground='red')
         
-        self.tree.column('#1', minwidth=100, width=150)
-        self.tree.column('#2', minwidth=100, width=150)
-        self.tree.column('#3', minwidth=100, width=150)
-        self.tree.column('#4', minwidth=100, width=150)
-        self.tree.column('#5', minwidth=100, width=150)
-        self.tree.column('#6', minwidth=100, width=150)
-        self.tree.column('#7', minwidth=100, width=150)
+        self.tree.column('#1', minwidth=100, width=100)
+        self.tree.column('#2', minwidth=100, width=100)
+        self.tree.column('#3', minwidth=100, width=100)
+        self.tree.column('#4', minwidth=100, width=100)
+        self.tree.column('#5', minwidth=100, width=100)
+        self.tree.column('#6', minwidth=100, width=100)
+        self.tree.column('#7', minwidth=100, width=100)
 
         # TODO: Need to fix right click/copy functionality
         # Bind the right-click event to show the context menu
@@ -193,6 +216,7 @@ class BusinessApp:
 
         for col in columns:
             self.tree.heading(col, text=col)
+            self.tree.column(col, anchor="center", stretch=True)
 
         for col in self.tree['columns']:
             self.tree.heading(col, text=col, command=lambda c=col: self.sort_by_column(c))
@@ -239,7 +263,7 @@ class BusinessApp:
 
         # Filter by Membership Type
         if membership_filter != "All Memberships":
-            self.filtered_members = [member for member in self.members if member[7] == membership_filter]
+            self.filtered_members = [member for member in self.members if member[8] == membership_filter]
 
         # Filter by Active Status
         if active_filter != "All Status":
@@ -261,6 +285,7 @@ class BusinessApp:
         expire_date = datetime.strptime(expire_date_str, '%Y-%m-%d')
         return expire_date >= datetime.now()
 
+
     # This is were filtered data is officially displayed
     def display_members(self, members):
         for member in members:
@@ -278,7 +303,7 @@ class BusinessApp:
             self.tree.insert("", "end", 
                     values=member + (active_status,), 
                     tags=(status_tag,))
-
+            
 
     def sort_by_column(self, column):
         # Create the dropdown menu when you click on the "Last Name" column
