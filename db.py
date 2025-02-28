@@ -1,18 +1,22 @@
 import os
+import platform
 import psycopg2
 from crypto import KeyManage, Crypto
 
 
 class Database:
     def __init__(self):
-        self.system_info = os.uname()
+        self.system_info = platform.uname()
         self.user_login = os.getlogin()
 
         key_man = KeyManage()
         if self.system_info[0] == "Linux":
             file_path = "/home/" + self.user_login + "/.member_track/"
+        elif self.system_info[0] == "Windows":
+            file_path = "C:/Users/" + self.user_login + "/AppData/Local/MembershipTracker/"
         else:
             file_path = ""
+
         key = key_man.load_key(file_path + "encryption.key")
         crypto = Crypto()
 

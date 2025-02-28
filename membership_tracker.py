@@ -1,4 +1,5 @@
 import os
+import platform
 import json
 import tkinter as tk
 from tkinter import *
@@ -12,11 +13,13 @@ from db import Database
 class BusinessApp:
     db = Database()
     def __init__(self, root, current_user):
-        self.system_info = os.uname()
+        self.system_info = platform.uname()
         self.user_login = os.getlogin()
         
         if self.system_info[0] == "Linux":
             config_path = "/home/" + self.user_login + "/.member_track/config.json"
+        elif self.system_info[0] == "Windows":
+            config_path = "C:/Users/" + self.user_login + "/AppData/Local/MembershipTracker/config.json"
         else:
             config_path = "config.json"
 
