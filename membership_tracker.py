@@ -1,3 +1,5 @@
+import os
+import json
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
@@ -10,6 +12,19 @@ from db import Database
 class BusinessApp:
     db = Database()
     def __init__(self, root, current_user):
+        self.system_info = os.uname()
+        self.user_login = os.getlogin()
+        
+        if self.system_info[0] == "Linux":
+            config_path = "/home/" + self.user_login + "/.member_track/config.json"
+        else:
+            config_path = "config.json"
+
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+        self.business_name = config["business_name"]
+
         self.current_user = current_user
         self.is_admin = self.db.get_user_role(self.current_user) == 'admin' 
 
@@ -32,7 +47,7 @@ class BusinessApp:
         bold_font.actual()["weight"] = "bold"
             
         self.title = ttk.Label(self.frm, 
-                text='Some Business',
+                text=self.business_name,
                 font=bold_font,
                 foreground='blue')
         self.title.grid(column=1, row=0)
@@ -586,7 +601,7 @@ class BusinessApp:
                     self.on_search()
 
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to update member: {e}")
+                messagebox.showerror("Error", f"Failed to delete member: {e}")
 
 
     def add_member_window(self):
@@ -645,32 +660,47 @@ class BusinessApp:
             member_expire = member_expire_entry.get()
             store_credit = store_credit_entry.get()
             member_type = member_type_entry.get()
+ 
+            member_check_tuple = self.db.search_members(
+                    first_name.lower(), 
+                    last_name.lower(), 
+                    phone_number)
+           
+            member_check_confirm = True
 
-            try:    
-                self.db.add_member(
-                        first_name.lower(),
-                        last_name.lower(),
-                        phone_number,
-                        email,
-                        member_start,
-                        member_expire,
-                        store_credit,
-                        member_type.lower())
-                
-                messagebox.showinfo("Success", "Member added successfully")
-                
-                # Clear form
-                first_name_entry.delete(0, tk.END)
-                last_name_entry.delete(0, tk.END)
-                phone_number_entry.delete(0, tk.END)
-                email_entry.delete(0, tk.END)
-                member_start_entry.delete(0, tk.END)
-                member_expire_entry.delete(0, tk.END)
-                store_credit_entry.delete(0, tk.END)
-                member_type_entry.delete(0, tk.END)
+            for member in member_check_tuple:
+                if (first_name == member[1] and last_name == member[2]) or phone_number == member[3]:
+                    member_check_confirm = messagebox.askyesno("Warning!", 
+                            f"Member name or phone number exists!\nContinue?")
+                    break
 
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to add member: {e}")
+
+            if member_check_confirm == True:
+                try:    
+                    self.db.add_member(
+                            first_name.lower(),
+                            last_name.lower(),
+                            phone_number,
+                            email,
+                            member_start,
+                            member_expire,
+                            store_credit,
+                            member_type.lower())
+                    
+                    messagebox.showinfo("Success", "Member added successfully")
+                    
+                    # Clear form
+                    first_name_entry.delete(0, tk.END)
+                    last_name_entry.delete(0, tk.END)
+                    phone_number_entry.delete(0, tk.END)
+                    email_entry.delete(0, tk.END)
+                    member_start_entry.delete(0, tk.END)
+                    member_expire_entry.delete(0, tk.END)
+                    store_credit_entry.delete(0, tk.END)
+                    member_type_entry.delete(0, tk.END)
+
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to add member: {e}")
 
 
         submit_button = ttk.Button(add_mem_frame, text="Submit", command=on_submit)

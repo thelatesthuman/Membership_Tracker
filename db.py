@@ -5,8 +5,15 @@ from crypto import KeyManage, Crypto
 
 class Database:
     def __init__(self):
+        self.system_info = os.uname()
+        self.user_login = os.getlogin()
+
         key_man = KeyManage()
-        key = key_man.load_key("encryption.key")
+        if self.system_info[0] == "Linux":
+            file_path = "/home/" + self.user_login + "/.member_track/"
+        else:
+            file_path = ""
+        key = key_man.load_key(file_path + "encryption.key")
         crypto = Crypto()
 
 
