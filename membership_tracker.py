@@ -2,6 +2,7 @@ import os
 import platform
 import json
 import tkinter as tk
+from psycopg2 import errors
 from tkinter import *
 from tkinter import ttk
 from tkinter import font
@@ -446,6 +447,11 @@ class BusinessApp:
             updated_amount = update_amount_entry.get()
             add_description = add_description_entry.get()
 
+            if updated_amount == "":
+                messagebox.showerror("Error", 
+                        "Please fill required fields (Update Amount)")
+                return
+
             try:
                 self.db.update_store_credit_transactions(
                         member_id,
@@ -541,13 +547,44 @@ class BusinessApp:
 
 
         def apply_update():
-            updated_first_name = update_first_name_entry.get()
-            updated_last_name = update_last_name_entry.get()
-            updated_phone_number = update_phone_number_entry.get()
+            updated_first_name = update_first_name_entry.get().strip()
+            updated_last_name = update_last_name_entry.get().strip()
+            updated_phone_number = update_phone_number_entry.get().strip()
             updated_email = update_email_entry.get()
             updated_member_start = update_member_start_entry.get()
             updated_member_expire = update_member_expire_entry.get()
             updated_member_type = update_member_type_entry.get()
+
+            if updated_first_name == "" or updated_last_name == "" or updated_phone_number == "":
+                messagebox.showerror("Error", 
+                        "Please fill required fields (First Name, Last Name, Phone Number)")
+                return
+
+            original_first_name = selected_member[1]
+            original_last_name = selected_member[2]
+            original_phone_number = str(selected_member[3])
+
+
+            check_duplicate = False
+            if updated_first_name.strip().lower() != original_first_name.strip().lower() or updated_last_name.strip().lower() != original_last_name.strip().lower() or updated_phone_number.strip().lower() != original_phone_number.strip().lower():
+                check_duplicate = True
+
+            
+            if check_duplicate == True:
+                member_check_tuple = self.db.search_members(
+                        updated_first_name.lower(), 
+                        updated_last_name.lower(), 
+                        updated_phone_number)
+               
+                member_check_confirm = True
+
+                for member in member_check_tuple:
+                    if member[0] != member_id and (updated_first_name == member[1] and updated_last_name == member[2]) or member[0] != member_id and updated_phone_number == member[3]:
+                        member_check_confirm = messagebox.askyesno("Warning!", 
+                                f"Member name or phone number exists!\nContinue?")
+                        break
+                if not member_check_confirm:
+                    return
 
             try:
                 self.db.update_member(
@@ -663,7 +700,12 @@ class BusinessApp:
             member_expire = member_expire_entry.get()
             store_credit = store_credit_entry.get()
             member_type = member_type_entry.get()
- 
+
+            if first_name == "" or last_name == "" or phone_number == "":
+                messagebox.showerror("Error", 
+                        "Please fill required fields (First Name, Last Name, Phone Number, Store Credit)")
+                return
+
             member_check_tuple = self.db.search_members(
                     first_name.lower(), 
                     last_name.lower(), 
@@ -701,7 +743,9 @@ class BusinessApp:
                     member_expire_entry.delete(0, tk.END)
                     store_credit_entry.delete(0, tk.END)
                     member_type_entry.delete(0, tk.END)
-
+                
+                except errors.InvalidTextRepresentation:
+                    messagebox.showerror("Error", "Please fill required fields (First Name, Last Name, Phone Number, Store Credit)")
                 except Exception as e:
                     messagebox.showerror("Error", f"Failed to add member: {e}")
 
