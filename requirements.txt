@@ -1,0 +1,9 @@
+Requirements
+
+python
+postgresql
+psycopg2
+tkinter
+bcrypt
+cryptography
+tkcalendar
