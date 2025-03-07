@@ -545,68 +545,93 @@ class BusinessApp:
         update_member_type_entry.insert(0, selected_member[8])
         update_member_type_entry.grid(column=1, row=6)
 
-
         def apply_update():
-            updated_first_name = update_first_name_entry.get().strip()
-            updated_last_name = update_last_name_entry.get().strip()
-            updated_phone_number = update_phone_number_entry.get().strip()
-            updated_email = update_email_entry.get()
-            updated_member_start = update_member_start_entry.get()
-            updated_member_expire = update_member_expire_entry.get()
-            updated_member_type = update_member_type_entry.get()
+            # Collect updated data
+            updated_data = {
+                'first_name': update_first_name_entry.get().strip(),
+                'last_name': update_last_name_entry.get().strip(),
+                'phone_number': update_phone_number_entry.get().strip(),
+                'email': update_email_entry.get(),
+                'member_start': update_member_start_entry.get(),
+                'member_expire': update_member_expire_entry.get(),
+                'member_type': update_member_type_entry.get().lower()
+            }
 
-            if updated_first_name == "" or updated_last_name == "" or updated_phone_number == "":
-                messagebox.showerror("Error", 
-                        "Please fill required fields (First Name, Last Name, Phone Number)")
+            # Validate required fields
+            if not validate_required_fields(updated_data):
                 return
 
-            original_first_name = selected_member[1]
-            original_last_name = selected_member[2]
-            original_phone_number = str(selected_member[3])
+            original_data = {
+                'member_id': selected_member[0],    
+                'first_name': selected_member[1],
+                'last_name': selected_member[2],
+                'phone_number': str(selected_member[3]),
+                'email': selected_member[4],
+                'member_start': selected_member[5],
+                'member_expire': selected_member[6],
+                'member_type': selected_member[7]
+            }
 
+            # Check for updates in the fields
+            if not has_fields_updated(updated_data, original_data):
+                print("No fields have been updated, skipping duplicate check")
+                return
 
-            check_duplicate = False
-            if updated_first_name.strip().lower() != original_first_name.strip().lower() or updated_last_name.strip().lower() != original_last_name.strip().lower() or updated_phone_number.strip().lower() != original_phone_number.strip().lower():
-                check_duplicate = True
+            # Perform duplicate check
+            if is_duplicate(updated_data):
+                return
 
-            
-            if check_duplicate == True:
-                member_check_tuple = self.db.search_members(
-                        updated_first_name.lower(), 
-                        updated_last_name.lower(), 
-                        updated_phone_number)
-               
-                member_check_confirm = True
-
-                for member in member_check_tuple:
-                    if member[0] != member_id and (updated_first_name == member[1] and updated_last_name == member[2]) or member[0] != member_id and updated_phone_number == member[3]:
-                        member_check_confirm = messagebox.askyesno("Warning!", 
-                                f"Member name or phone number exists!\nContinue?")
-                        break
-                if not member_check_confirm:
-                    return
-
+            # Update member data in the database
             try:
-                self.db.update_member(
-                        member_id, 
-                        updated_first_name.lower(), 
-                        updated_last_name.lower(), 
-                        updated_phone_number,
-                        updated_email,
-                        updated_member_start, 
-                        updated_member_expire,
-                        updated_member_type.lower())
-                
+                update_member_in_db(updated_data)
                 messagebox.showinfo("Success", "Member data updated successfully!")
-                update_member_window.destroy()  
-                self.search_window.destroy()
-                if self.search_all_flag:
-                    self.on_search_all()
-                else:
-                    self.on_search()
-            
+                close_windows_and_refresh()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to update member: {e}")
+
+        def validate_required_fields(updated_data):
+            if updated_data['first_name'] == "" or updated_data['last_name'] == "" or updated_data['phone_number'] == "":
+                messagebox.showerror("Error", "Please fill required fields (First Name, Last Name, Phone Number)")
+                return False
+            return True
+
+        def has_fields_updated(updated_data, original_data):
+            return (updated_data['first_name'].lower() != original_data['first_name'].lower() or updated_data['last_name'].lower() != original_data['last_name'].lower() or updated_data['phone_number'] != original_data['phone_number'] or updated_data['email'] != original_data['email'] or updated_data['member_start'] != original_data['member_start'] or updated_data['member_expire'] != original_data['member_expire'] or updated_data['member_type'] != original_data['member_type'])
+
+        def is_duplicate(updated_data):
+            member_check_tuple = self.db.search_members(
+                updated_data['first_name'].lower(),
+                updated_data['last_name'].lower(),
+                updated_data['phone_number']
+            )
+
+            for member in member_check_tuple:
+                if member[0] != member_id and (
+                    (updated_data['first_name'] == member[1] and updated_data['last_name'] == member[2]) or updated_data['phone_number'] == member[3]):
+                    confirm = messagebox.askyesno("Warning!", "Member name or phone number exists!\nContinue?")
+                    return not confirm  # return False if user cancels (stopping update)
+            return False
+
+        def update_member_in_db(updated_data):
+            self.db.update_member(
+                member_id,
+                updated_data['first_name'],
+                updated_data['last_name'],
+                updated_data['phone_number'],
+                updated_data['email'],
+                updated_data['member_start'],
+                updated_data['member_expire'],
+                updated_data['member_type']
+            )
+
+        def close_windows_and_refresh():
+            update_member_window.destroy()
+            self.search_window.destroy()
+            if self.search_all_flag:
+                self.on_search_all()
+            else:
+                self.on_search()
+
 
         update_button = ttk.Button(update_member_frame, 
                 text="Update", 
@@ -703,8 +728,14 @@ class BusinessApp:
 
             if first_name == "" or last_name == "" or phone_number == "":
                 messagebox.showerror("Error", 
-                        "Please fill required fields (First Name, Last Name, Phone Number, Store Credit)")
+                        "Please fill required fields (First Name, Last Name, Phone Number)")
                 return
+            if email == "":
+                email = "none"
+            if store_credit == "":
+                store_credit = 0
+            if member_type == "":
+                member_type = "standard"
 
             member_check_tuple = self.db.search_members(
                     first_name.lower(), 
@@ -745,7 +776,7 @@ class BusinessApp:
                     member_type_entry.delete(0, tk.END)
                 
                 except errors.InvalidTextRepresentation:
-                    messagebox.showerror("Error", "Please fill required fields (First Name, Last Name, Phone Number, Store Credit)")
+                    messagebox.showerror("Error", "Please fill required fields (First Name, Last Name, Phone Number)")
                 except Exception as e:
                     messagebox.showerror("Error", f"Failed to add member: {e}")
 
