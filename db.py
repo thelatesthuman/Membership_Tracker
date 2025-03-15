@@ -220,7 +220,8 @@ class Database:
             else:
                 return None  # User not found
 
-    # Search for all users
+
+    # Search for all members
     def search_all_members(self):
         conn = self.connect()
         cur = conn.cursor()
@@ -229,3 +230,33 @@ class Database:
         cur.close()
         conn.close()
         return members
+
+
+    def export_data(self, filepath):
+        conn = self.connect()
+        cur = conn.cursor()
+        member_path = filepath + '-members.csv'
+        trans_path = filepath + '-transactions.csv'
+        with open(member_path, 'w') as f:
+            cur.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'members'
+            ORDER BY columns.ordinal_position
+            """)
+            columns = [row[0] for row in cur.fetchall()]
+            f.write(','.join(columns) + '\n')
+            cur.copy_to(f, 'members', sep=',', null='NULL')
+        with open(trans_path, 'w') as f:
+            cur.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'store_credit_transactions'
+            ORDER BY columns.ordinal_position
+            """)
+            columns = [row[0] for row in cur.fetchall()]
+            f.write(','.join(columns) + '\n')
+            cur.copy_to(f, 'store_credit_transactions', 
+            sep=',', null='NULL')    
+        cur.close()
+        conn.close()

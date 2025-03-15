@@ -6,7 +6,7 @@ from psycopg2 import errors
 from tkinter import *
 from tkinter import ttk
 from tkinter import font
-from tkinter import messagebox
+from tkinter import filedialog, messagebox
 from tkcalendar import DateEntry
 from datetime import datetime
 from db import Database
@@ -41,6 +41,37 @@ class BusinessApp:
         self.frm = ttk.Frame(root, padding=200)
         self.frm.grid(sticky="nsew")
 
+        def export_data():
+            # Open the save file dialog
+            filepath = filedialog.asksaveasfilename(
+                title="Export as...",  # Title of the dialog box
+                #defaultextension=".csv",  # Default file extension
+#                filetypes=(("CSV files", "*.csv"), ("All files", "*.*")),  # Allowed file types
+            )
+            
+            if filepath:  # If a file path is chosen
+                # Here you can handle file saving (e.g., writing data to the file)
+                print(f"Saved file to: {filepath}")
+                try:
+                    db = Database()
+                    db.export_data(filepath)
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to export file: {str(e)}")
+
+
+        def close_app():
+            self.root.destroy()
+
+        menu_bar = tk.Menu(root)
+        
+        file_menu = tk.Menu(menu_bar, tearoff=0)
+        file_menu.add_command(label="Export", command=export_data)
+        file_menu.add_command(label="Close", command=close_app)
+
+        menu_bar.add_cascade(label="File", menu=file_menu)
+        
+        root.config(menu=menu_bar)
+    
         for i in range(7):
             self.frm.grid_rowconfigure(i, weight=1)
         
