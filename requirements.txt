@@ -7,3 +7,4 @@ tkinter
 bcrypt
 cryptography
 tkcalendar
+pillow

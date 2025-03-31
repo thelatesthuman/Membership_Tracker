@@ -260,3 +260,37 @@ class Database:
             sep=',', null='NULL')    
         cur.close()
         conn.close()
+
+
+    def get_member_photo(self, member_id):
+        #Fetch the photo from the database for the given member ID.
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
+            cursor.execute("""SELECT profile_picture 
+                FROM members WHERE member_id = %s""", 
+                (member_id,))
+            result = cursor.fetchone()
+            conn.close()
+            if result and result[0]:
+                return result[0]  # Return photo binary data
+            else:
+                return None  # No photo found
+        except Exception as e:
+            print(f"Error fetching photo: {e}")
+            return None
+
+
+    def update_member_photo(self, member_id, photo_data):
+        #Update the member's photo in the database
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
+            cursor.execute("""UPDATE members 
+                        SET profile_picture = %s WHERE member_id = %s""", 
+                        (photo_data, member_id))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"Error updating photo: {e}")
+            raise e

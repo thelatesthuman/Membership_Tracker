@@ -8,7 +8,8 @@ CREATE TABLE members (
     member_start DATE,
     member_expire DATE,
     store_credit NUMERIC(10, 2),
-    membership_type VARCHAR(20)
+    membership_type VARCHAR(20),
+    profile_picture BYTEA
 );
 
 -- Create Store Credit Transactions table

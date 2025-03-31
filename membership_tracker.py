@@ -4,9 +4,7 @@ import json
 import tkinter as tk
 from psycopg2 import errors
 from tkinter import *
-from tkinter import ttk
-from tkinter import font
-from tkinter import filedialog, messagebox
+from tkinter import ttk, font, filedialog, messagebox
 from tkcalendar import DateEntry
 from datetime import datetime
 from db import Database
@@ -50,8 +48,8 @@ class BusinessApp:
             )
             
             if filepath:  # If a file path is chosen
-                # Here you can handle file saving (e.g., writing data to the file)
-                print(f"Saved file to: {filepath}")
+                messagebox.showinfo("Success", 
+                    f"Saved file to: {filepath}")
                 try:
                     db = Database()
                     db.export_data(filepath)
@@ -111,9 +109,9 @@ class BusinessApp:
         self.search_all_button.grid(column=2, row=4, sticky="ew")
         self.search_all_button.bind('<Return>', lambda event: self.on_search_all())
         
-        self.close_button = ttk.Button(self.frm, text='Close', command=self.root.destroy)
-        self.close_button.grid(column=0, row=4, sticky="ew")
-        self.close_button.bind('<Return>', lambda event: self.root.destroy())
+#        self.close_button = ttk.Button(self.frm, text='Close', command=self.root.destroy)
+#        self.close_button.grid(column=0, row=4, sticky="ew")
+#        self.close_button.bind('<Return>', lambda event: self.root.destroy())
 
         self.add_mem_window_button = ttk.Button(self.frm, text="Add Member", 
                 command=self.add_member_window)
@@ -133,24 +131,24 @@ class BusinessApp:
         self.search_all_flag = False
 
         # TODO: Need to fix right click/copy functionality
-    #def show_right_click_menu(self, event):
-    #    """Displays the right-click menu when a row is selected"""
-    #    item = self.tree.identify('item', event.x, event.y) 
-    #    if item:
-    #        self.tree.selection_set(item)  
-    #        self.context_menu.post(event.x_root, event.y_root)
+    def show_right_click_menu(self, event):
+        """Displays the right-click menu when a row is selected"""
+        item = self.tree.identify('item', event.x, event.y) 
+        if item:
+            self.tree.selection_set(item)  
+            self.context_menu.post(event.x_root, event.y_root)
 
 
         # TODO: Need to fix right click/copy functionality
-    #def copy_to_clipboard(self):
-    #    """Copies the selected row's data to the clipboard"""
-    #    selected_item = self.tree.selection()
-    #    if selected_item:
-    #        row_data = self.tree.item(selected_item[0])['values']
-    #        text_to_copy = "".join(str(row_data))
-    #        self.root.clipboard_clear()
-    #        self.root.clipboard_append(text_to_copy)
-    #        self.root.update()
+    def copy_to_clipboard(self):
+        """Copies the selected row's data to the clipboard"""
+        selected_item = self.tree.selection()
+        if selected_item:
+            row_data = self.tree.item(selected_item[0])['values']
+            text_to_copy = "".join(str(row_data))
+            self.root.clipboard_clear()
+            self.root.clipboard_append(text_to_copy)
+            self.root.update()
         
 
     def on_search(self):
@@ -260,9 +258,10 @@ class BusinessApp:
 
         # TODO: Need to fix right click/copy functionality
         # Bind the right-click event to show the context menu
-        #self.tree.bind("<Button-3>", self.show_right_click_menu)
-        #self.context_menu = tk.Menu(self.root, tearoff=0)
-        #self.context_menu.add_command(label="Copy", command=self.copy_to_clipboard)
+        self.tree.bind("<Button-3>", self.show_right_click_menu)
+        self.context_menu = tk.Menu(self.root, tearoff=0)
+        self.context_menu.add_command(label="View Profile", command=self.view_profile)
+        self.context_menu.add_command(label="Copy", command=self.copy_to_clipboard)
 
         for col in columns:
             self.tree.heading(col, text=col)
@@ -336,14 +335,10 @@ class BusinessApp:
         return expire_date >= datetime.now()
 
 
-    # This is were filtered data is officially displayed
+    # This is where filtered data is officially displayed
     def display_members(self, members):
         for member in members:
-            expire_date_str = str(member[6])
-            
-            expire_date = datetime.strptime(expire_date_str, '%Y-%m-%d')
-
-            if expire_date >= datetime.now():
+            if self.is_active(member):
                 active_status = 'ACTIVE'
                 status_tag = 'active'
             else:
@@ -351,7 +346,7 @@ class BusinessApp:
                 status_tag = 'not active'
 
             self.tree.insert("", "end", 
-                    values=member + (active_status,), 
+                    values=member[:-1] + (active_status,), 
                     tags=(status_tag,))
             
 
@@ -431,7 +426,8 @@ class BusinessApp:
                 'Transaction Date',
                 'Description')
     
-        tran_tree = ttk.Treeview(transactions_frame, columns=columns, show="headings")
+        tran_tree = ttk.Treeview(transactions_frame, columns=columns, 
+            show="headings")
         tran_tree.grid(column=0, row=4, columnspan=5)
     
         for col in columns:
@@ -442,9 +438,9 @@ class BusinessApp:
    
         # TODO: Need to fix right click/copy functionality
         # Bind the right-click event to show the context menu
-        #tran_tree.bind("<Button-3>", self.show_right_click_menu)
-        #tran_context_menu = tk.Menu(self.root, tearoff=0)
-        #tran_context_menu.add_command(label="Copy", command=self.copy_to_clipboard)
+        tran_tree.bind("<Button-3>", self.show_right_click_menu)
+        tran_context_menu = tk.Menu(self.root, tearoff=0)
+        tran_context_menu.add_command(label="Copy", command=self.copy_to_clipboard)
 
 
     def on_update_credit(self):
@@ -820,3 +816,162 @@ class BusinessApp:
                 command=add_mem_window.destroy)
         close_button.grid(column=0, row=8)
         close_button.bind('<Return>', lambda even: add_mem_window.destroy())
+    
+
+    def view_profile(self):
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No selection", "Please select a member profile to view.")
+            return
+
+        selected_member = self.tree.item(selected_item)['values']
+        
+        # Create or refresh the profile window
+        if hasattr(self, 'view_profile_window') and self.view_profile_window.winfo_exists():
+        # If the window already exists, destroy it to refresh
+            self.view_profile_window.destroy()
+
+        self.view_profile_window = Toplevel(self.search_window)
+        self.view_profile_window.title("View Profile")
+
+        view_profile_frame = ttk.Frame(self.view_profile_window, 
+            padding=100)
+        view_profile_frame.grid()
+        
+        if self.is_active(selected_member):
+            active_status = 'ACTIVE'
+            #status_tag = 'active'
+            status_color = 'green'
+        else:
+            active_status = 'NOT ACTIVE'
+            #status_tag = 'not active'
+            status_color = 'red'
+        bold_font = ('Helvetica', 10, 'bold')
+        
+        db = Database()
+        photo_data = db.get_member_photo(selected_member[0])
+
+        from PIL import Image, ImageTk
+        from io import BytesIO
+        if photo_data:
+            # Convert photo data (binary) to an image object
+            photo_image = Image.open(BytesIO(photo_data))
+            photo_image = photo_image.resize((200, 200))  # Resize to fit the profile window (optional)
+            photo = ImageTk.PhotoImage(photo_image)
+        else:
+            # Set a default photo if no photo is found
+            photo = ImageTk.PhotoImage(Image.open('pics/default_member_photo.jpg').resize((200, 200)))
+
+        # Display the photo
+        photo_label = ttk.Label(view_profile_frame, image=photo)
+        photo_label.image = photo  # Keep a reference to the image to prevent it from being garbage collected
+        photo_label.grid(column=1, row=0, rowspan=4, sticky=W)
+
+        view_first_name_field = ttk.Label(view_profile_frame, 
+                text="First Name: ")
+        view_first_name_field.grid(column=0, row=5, sticky=W)
+        view_first_name_label = ttk.Label(view_profile_frame,
+                text=selected_member[1])
+        view_first_name_label.grid(column=1, row=5)
+
+        view_last_name_field = ttk.Label(view_profile_frame, 
+                text="Last Name: ")
+        view_last_name_field.grid(column=0, row=6, sticky=W)
+        view_last_name_label = ttk.Label(view_profile_frame,
+                text=selected_member[2])
+        view_last_name_label.grid(column=1, row=6)
+
+        view_phone_number_field = ttk.Label(view_profile_frame, 
+                text="Phone Number: ")
+        view_phone_number_field.grid(column=0, row=7, sticky=W)
+        view_phone_number_label = ttk.Label(view_profile_frame,
+                text=selected_member[3])
+        view_phone_number_label.grid(column=1, row=7)
+        
+        view_email_field = ttk.Label(view_profile_frame, 
+                text="Email: ")
+        view_email_field.grid(column=0, row=8, sticky=W)
+        view_email_label = ttk.Label(view_profile_frame,
+                text=selected_member[4])
+        view_email_label.grid(column=1, row=8)
+        
+        view_member_start_field = ttk.Label(view_profile_frame, 
+                text="Member Start: ")
+        view_member_start_field.grid(column=0, row=9, sticky=W)
+        view_member_start_label = ttk.Label(view_profile_frame, 
+                text=selected_member[5])
+        view_member_start_label.grid(column=1, row=9)
+
+        view_member_expire_field = ttk.Label(view_profile_frame, 
+                text="Member Expire: ")
+        view_member_expire_field.grid(column=0, row=10, sticky=W)
+        view_member_expire_label = ttk.Label(view_profile_frame, 
+                text=selected_member[6])
+        view_member_expire_label.grid(column=1, row=10)
+
+        view_store_credit_field = ttk.Label(view_profile_frame, 
+                text="Store Credit: ")
+        view_store_credit_field.grid(column=0, row=11, sticky=W)
+        view_store_credit_label = ttk.Label(view_profile_frame, 
+                text=selected_member[7])
+        view_store_credit_label.grid(column=1, row=11)
+        
+        view_member_type_field = ttk.Label(view_profile_frame, 
+                text="Membership Type: ")
+        view_member_type_field.grid(column=0, row=12, sticky=W)
+        view_member_type_label = ttk.Label(view_profile_frame, 
+                text=selected_member[8])
+        view_member_type_label.grid(column=1, row=12)
+
+        view_member_status_field = ttk.Label(view_profile_frame, 
+                text="Membership Status: ")
+        view_member_status_field.grid(column=0, row=13, sticky=W)
+        view_member_status_label = ttk.Label(view_profile_frame, 
+                text=active_status, foreground=status_color, 
+                    font=bold_font)
+        view_member_status_label.grid(column=1, row=13)
+
+        update_photo_button = ttk.Button(self.view_profile_window, 
+            text="Update Photo", 
+            command=lambda: self.update_photo(selected_member[0]))
+        update_photo_button.grid(column=1, row=14, columnspan=2)
+        
+        #self.view_profile_window.after(100, 
+        #    self.view_profile_window.lift())
+        #self.view_profile_window.after(100, 
+        #    self.view_profile_window.focus_set())
+        #self.view_profile_window.grab_set()
+        self.view_profile_window.lift()
+        self.view_profile_window.focus_force()
+
+
+    def update_photo(self, member_id):
+        # Open file dialog to choose a new photo
+        file_path = filedialog.askopenfilename(
+            title="Select an Image File",
+            filetypes=[("JPEG files", "*.jpg"),
+                  ("JPEG files", "*.jpeg"), 
+                  ("PNG files", "*.png"), 
+                  ("GIF files", "*.gif"), 
+                  ("All Image Files", "*.*")]
+        )
+        if not file_path:
+            return  # User canceled the file dialog
+
+        try:
+            # Open the image and convert it to binary data
+            with open(file_path, 'rb') as f:
+                photo_data = f.read()
+
+            # Store the new photo in the database
+            db = Database()
+            db.update_member_photo(member_id, photo_data)
+
+            self.view_profile()
+
+            messagebox.showinfo("Success", 
+                "Profile photo updated successfully.")
+
+        except Exception as e:
+            messagebox.showerror("Error", 
+                f"Failed to update photo: {str(e)}")
