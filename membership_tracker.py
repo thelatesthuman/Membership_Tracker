@@ -43,8 +43,6 @@ class BusinessApp:
             # Open the save file dialog
             filepath = filedialog.asksaveasfilename(
                 title="Export as...",  # Title of the dialog box
-                #defaultextension=".csv",  # Default file extension
-#                filetypes=(("CSV files", "*.csv"), ("All files", "*.*")),  # Allowed file types
             )
             
             if filepath:  # If a file path is chosen
@@ -109,9 +107,6 @@ class BusinessApp:
         self.search_all_button.grid(column=2, row=4, sticky="ew")
         self.search_all_button.bind('<Return>', lambda event: self.on_search_all())
         
-#        self.close_button = ttk.Button(self.frm, text='Close', command=self.root.destroy)
-#        self.close_button.grid(column=0, row=4, sticky="ew")
-#        self.close_button.bind('<Return>', lambda event: self.root.destroy())
 
         self.add_mem_window_button = ttk.Button(self.frm, text="Add Member", 
                 command=self.add_member_window)
@@ -156,7 +151,10 @@ class BusinessApp:
         last_name = self.last_name_entry.get()
         phone_number = self.phone_number_entry.get()
         self.search_all_flag = False
-        self.search_members(first_name, last_name, phone_number, search_all=False)
+        self.search_members(first_name, 
+                            last_name, 
+                            phone_number, 
+                            search_all=False)
 
 
     def on_search_all(self):
@@ -185,6 +183,43 @@ class BusinessApp:
         self.search_frame.grid_columnconfigure(0, weight=1)
 
         self.search_all_flag = search_all
+        
+        self.sort_order = True
+
+        menu_bar = tk.Menu(self.search_window)        
+        
+        file_menu = tk.Menu(menu_bar, tearoff=0)
+
+        sort_menu = tk.Menu(file_menu, tearoff=0)
+        sort_menu.add_command(label="Sort Last Name A-Z", 
+            command=self.sort_last_name_ascending)
+        sort_menu.add_command(label="Sort Last Name Z-A",
+            command=self.sort_last_name_descending)
+        file_menu.add_cascade(label="Sort", menu=sort_menu)
+        
+        filter_menu = tk.Menu(file_menu, tearoff=0)
+        member_type_menu = tk.Menu(filter_menu, tearoff=0)
+        member_status_menu = tk.Menu(filter_menu, tearoff=0)
+        member_type_menu.add_command(label="All Members", 
+            command=lambda: self.member_type_filter("All Members"))
+        member_type_menu.add_command(label="Premium", 
+            command=lambda: self.member_type_filter("premium"))
+        member_type_menu.add_command(label="Standard", 
+            command=lambda: self.member_type_filter("standard"))
+        member_status_menu.add_command(label="All Members",
+            command=lambda: self.member_status_filter("All Members"))
+        member_status_menu.add_command(label="Active",
+            command=lambda: self.member_status_filter("Active"))
+        member_status_menu.add_command(label="Not Active",
+            command=lambda: self.member_status_filter("Not Active"))
+        file_menu.add_cascade(label="Filter", menu=filter_menu)
+        filter_menu.add_cascade(label="Membership Type", 
+            menu=member_type_menu)
+        filter_menu.add_cascade(label="Membership Status",
+            menu=member_status_menu)
+
+        menu_bar.add_cascade(label="View", menu=file_menu)
+        self.search_window.config(menu=menu_bar)
 
         if search_all == False:
             members = self.db.search_members(
@@ -194,29 +229,12 @@ class BusinessApp:
         else:
             members = self.db.search_all_members()
 
-        # Create dropdowns for membership type and active status
-        self.membership_filter = ttk.Combobox(self.search_frame,
-                                               values=[
-                                                   "All Memberships", 
-                                                   "premium", 
-                                                   "standard"],
-                                               state="readonly")
-        self.membership_filter.set("All Memberships")
-        self.membership_filter.grid(column=4, row=1, sticky='w')
-
-        self.active_filter = ttk.Combobox(self.search_frame,
-                                          values=[
-                                              "All Status", 
-                                              "Active", 
-                                              "Not Active"],
-                                          state="readonly")
-        self.active_filter.set("All Status")
-        self.active_filter.grid(column=4, row=1, sticky='e')
-
-        self.membership_filter.bind("<<ComboboxSelected>>", self.apply_filters)
-        self.active_filter.bind("<<ComboboxSelected>>", self.apply_filters)
+        self.members = sorted(members, 
+            key=lambda x: x[2].lower())
+        self.display_search_results(self.members)
 
 
+    def display_search_results(self, members):
          # Clear previous results if any
         for widget in self.search_frame.winfo_children():
             if isinstance(widget, ttk.Treeview):
@@ -300,22 +318,40 @@ class BusinessApp:
         close_button = ttk.Button(self.search_frame, text='Close', 
                 command=self.search_window.destroy)
         close_button.grid(column=4, row=6, columnspan=1, sticky='ew')
-        close_button.bind('<Return>', lambda event: self.search_window.destroy())
+        close_button.bind('<Return>', 
+            lambda event: self.search_window.destroy())
 
 
-    def apply_filters(self, event=None):
-        """Applies the filters based on dropdown selections"""
-        membership_filter = self.membership_filter.get()
-        active_filter = self.active_filter.get()
+    def sort_last_name_ascending(self):
+        # Sort members by last name in ascending order (A-Z)
+        self.sort_order = True
+        self.members = sorted(self.members, 
+            key=lambda x: x[2].lower())
+        self.display_search_results(self.members)
 
+    def sort_last_name_descending(self):
+        # Sort members by last name in descending order (Z-A)
+        self.sort_order = False
+        self.members = sorted(self.members, 
+            key=lambda x: x[2].lower(), reverse=True)
+        self.display_search_results(self.members)
+
+    def member_type_filter(self, membership_filter):
         self.filtered_members = self.members
 
         # Filter by Membership Type
-        if membership_filter != "All Memberships":
+        if membership_filter != "All Members":
             self.filtered_members = [member for member in self.members if member[8] == membership_filter]
 
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+
+        self.display_members(self.filtered_members)
+
+
+    def member_status_filter(self, active_filter):
         # Filter by Active Status
-        if active_filter != "All Status":
+        if active_filter != "All Members":
             if active_filter == "Active":
                 self.filtered_members = [member for member in self.filtered_members if self.is_active(member)]
             elif active_filter == "Not Active":
@@ -350,50 +386,30 @@ class BusinessApp:
                     tags=(status_tag,))
             
 
-    def sort_by_column(self, column):
-        # Create the dropdown menu when you click on the "Last Name" column
-        if column == "Last Name":
-            self.show_sort_dropdown(column)
-        else:
-            pass
+    #def on_dropdown_selected(event):
+    #    sort_order = sort_dropdown.get()
+    #    self.on_sort_selected(sort_order)
+    #    sort_dropdown.destroy()  
 
-
-    def show_sort_dropdown(self, column):
-        # Create a combobox to act as the dropdown in the header
-        sort_dropdown = ttk.Combobox(self.tree, 
-                values=["Sort by Last Name (A-Z)", 
-                    "Sort by Last Name (Z-A)"], state="readonly")
-        sort_dropdown.set("Sort by Last Name (A-Z)")
-        
-        # Place the combobox over the column header where the user clicked
-        sort_dropdown.place(x=300, y=0) 
-
-        def on_dropdown_selected(event):
-            sort_order = sort_dropdown.get()
-            self.on_sort_selected(sort_order)
-            sort_dropdown.destroy()  
-
-        sort_dropdown.bind("<<ComboboxSelected>>", on_dropdown_selected)
 
 
     # TODO: Refactor filtering and sorting to clean the code up
-    def on_sort_selected(self, sort_order):
-        """Handles the sorting based on the combobox selection"""
-        #selected_sort = event.widget.get()
+    #def on_sort_selected(self, sort_order):
+    #    """Handles the sorting based on the combobox selection"""
+    #    #selected_sort = event.widget.get()
 
-        if sort_order == "Sort by Last Name (A-Z)":
-            # Sort the members alphabetically by last name
-            self.members = sorted(self.members, key=lambda x: x[2].lower())
-        elif sort_order == "Sort by Last Name (Z-A)":
-            # Sort the members in reverse alphabetical order
-            self.members = sorted(self.members, key=lambda x: x[2].lower(), 
-                    reverse=True)
+    #    if sort_order == "Sort by Last Name (A-Z)":
+    #        # Sort the members alphabetically by last name
+    #        self.members = sorted(self.members, key=lambda x: x[2].lower())
+    #    elif sort_order == "Sort by Last Name (Z-A)":
+    #        # Sort the members in reverse alphabetical order
+    #        self.members = sorted(self.members, key=lambda x: x[2].lower(),                reverse=True)
 
         # Clear the Treeview and display the sorted members
-        for row in self.tree.get_children():
-            self.tree.delete(row)
+    #    for row in self.tree.get_children():
+    #        self.tree.delete(row)
 
-        self.display_members(self.members)
+    #    self.display_members(self.members)
     
 
     def on_transactions(self):
