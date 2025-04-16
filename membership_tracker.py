@@ -39,21 +39,37 @@ class BusinessApp:
         self.frm = ttk.Frame(root, padding=200)
         self.frm.grid(sticky="nsew")
 
-        def export_data():
-            # Open the save file dialog
+        def export_data(data_type):
             filepath = filedialog.asksaveasfilename(
-                title="Export as...",  # Title of the dialog box
+                title="Export as..." 
             )
             
-            if filepath:  # If a file path is chosen
-                messagebox.showinfo("Success", 
-                    f"Saved file to: {filepath}")
+            if filepath:
                 try:
                     db = Database()
-                    db.export_data(filepath)
+                    db.export_data(data_type, filepath)
+                    messagebox.showinfo("Success", 
+                        f"Saved file to: {filepath}")
                 except Exception as e:
-                    messagebox.showerror("Error", f"Failed to export file: {str(e)}")
+                    messagebox.showerror("Error", 
+                        f"Failed to export file: {str(e)}")
 
+
+        def import_data(data_type):
+            filepath = filedialog.askopenfilename(
+                title="Import from..."
+            )
+
+            if filepath:
+                try:
+                    db = Database()
+                    db.import_data(data_type, filepath)
+                    messagebox.showinfo("Success", 
+                        f"Imported from file: {filepath}")
+                except Exception as e:
+                    messagebox.showerror("Error", 
+                        f"Failed to import data: {str(e)}")
+        
 
         def close_app():
             self.root.destroy()
@@ -61,9 +77,21 @@ class BusinessApp:
         menu_bar = tk.Menu(root)
         
         file_menu = tk.Menu(menu_bar, tearoff=0)
-        file_menu.add_command(label="Export", command=export_data)
+        export_menu = tk.Menu(file_menu, tearoff=0)
+        export_menu.add_command(label="Export Members", 
+            command=lambda: export_data("members"))
+        export_menu.add_command(label="Export Transactions",
+            command=lambda: export_data("transactions"))
+        
+        import_menu = tk.Menu(file_menu, tearoff=0)
+        import_menu.add_command(label="Import Members", 
+            command=lambda: import_data("members"))
+        import_menu.add_command(label="Import Transactions", 
+            command=lambda: import_data("transactions"))
+        
+        file_menu.add_cascade(label="Import", menu=import_menu)
+        file_menu.add_cascade(label="Export", menu=export_menu)
         file_menu.add_command(label="Close", command=close_app)
-
         menu_bar.add_cascade(label="File", menu=file_menu)
         
         root.config(menu=menu_bar)
@@ -98,20 +126,25 @@ class BusinessApp:
         self.phone_number_entry = ttk.Entry(self.frm)
         self.phone_number_entry.grid(column=1, row=3, sticky="ew")
 
-        self.search_button = ttk.Button(self.frm, text='Search', command=self.on_search)
+        self.search_button = ttk.Button(self.frm, text='Search', 
+            command=self.on_search)
         self.search_button.grid(column=1, row=4, sticky="ew")
-        self.search_button.bind('<Return>', lambda event: self.on_search())
+        self.search_button.bind('<Return>', 
+            lambda event: self.on_search())
 
         self.search_all_button = ttk.Button(self.frm, text='Search All', 
                 command=self.on_search_all)
         self.search_all_button.grid(column=2, row=4, sticky="ew")
-        self.search_all_button.bind('<Return>', lambda event: self.on_search_all())
+        self.search_all_button.bind('<Return>', 
+            lambda event: self.on_search_all())
         
 
-        self.add_mem_window_button = ttk.Button(self.frm, text="Add Member", 
-                command=self.add_member_window)
+        self.add_mem_window_button = ttk.Button(self.frm, 
+            text="Add Member", 
+            command=self.add_member_window)
         self.add_mem_window_button.grid(column=1, row=5, sticky="ew")
-        self.add_mem_window_button.bind('<Return>', lambda event: self.add_member_window())
+        self.add_mem_window_button.bind('<Return>', 
+            lambda event: self.add_member_window())
         
 
         self.create_user_button = None
@@ -189,7 +222,6 @@ class BusinessApp:
         menu_bar = tk.Menu(self.search_window)        
         
         file_menu = tk.Menu(menu_bar, tearoff=0)
-
         sort_menu = tk.Menu(file_menu, tearoff=0)
         sort_menu.add_command(label="Sort Last Name A-Z", 
             command=self.sort_last_name_ascending)
@@ -253,7 +285,9 @@ class BusinessApp:
                 'Membership Type',
                 'Active')
 
-        self.tree = ttk.Treeview(self.search_frame, columns=columns, show="headings")
+        self.tree = ttk.Treeview(self.search_frame, 
+            columns=columns, 
+            show="headings")
         self.tree.grid(column=0, row=4, columnspan=5, sticky="nsew")
 
         self.search_frame.grid_rowconfigure(4, weight=1)
@@ -263,8 +297,12 @@ class BusinessApp:
         self.search_frame.grid_columnconfigure(3, weight=1)
         self.search_frame.grid_columnconfigure(4, weight=1)
 
-        self.tree.tag_configure('active', font=('Ariel', 10, 'bold'), foreground='green')
-        self.tree.tag_configure('not active', font=('Ariel', 10, 'bold'), foreground='red')
+        self.tree.tag_configure('active', 
+            font=('Ariel', 10, 'bold'), 
+            foreground='green')
+        self.tree.tag_configure('not active', 
+            font=('Ariel', 10, 'bold'), 
+            foreground='red')
         
         self.tree.column('#1', minwidth=100, width=100)
         self.tree.column('#2', minwidth=100, width=100)
@@ -278,37 +316,52 @@ class BusinessApp:
         # Bind the right-click event to show the context menu
         self.tree.bind("<Button-3>", self.show_right_click_menu)
         self.context_menu = tk.Menu(self.root, tearoff=0)
-        self.context_menu.add_command(label="View Profile", command=self.view_profile)
-        self.context_menu.add_command(label="Copy", command=self.copy_to_clipboard)
+        self.context_menu.add_command(label="View Profile", 
+            command=self.view_profile)
+        self.context_menu.add_command(label="Copy", 
+            command=self.copy_to_clipboard)
 
         for col in columns:
             self.tree.heading(col, text=col)
             self.tree.column(col, anchor="center", stretch=True)
 
         for col in self.tree['columns']:
-            self.tree.heading(col, text=col, command=lambda c=col: self.sort_by_column(c))
+            self.tree.heading(col, text=col, 
+                command=lambda c=col: self.sort_by_column(c))
 
         self.members = members  # Store members data globally for sorting
-        self.filtered_members = members
+        self.filtered_members = members # Store filtered members
         self.display_members(members)  # Display members initially
 
         update_member_button = ttk.Button(self.search_frame, 
                 text="Update Member", 
                 command=self.on_update_member)
-        update_member_button.grid(column=4, row=5, columnspan=1, sticky='ew')
-        update_member_button.bind('<Return>', lambda event: self.on_update_member())
+        update_member_button.grid(column=4, 
+            row=5, 
+            columnspan=1, 
+            sticky='ew')
+        update_member_button.bind('<Return>', 
+            lambda event: self.on_update_member())
 
         update_credit_button = ttk.Button(self.search_frame, 
                 text="Update Credit", 
                 command=self.on_update_credit)
-        update_credit_button.grid(column=2, row=5, columnspan=1, sticky='ew')
-        update_credit_button.bind('<Return>', lambda event: self.on_update_credit())
+        update_credit_button.grid(column=2, 
+            row=5, 
+            columnspan=1, 
+            sticky='ew')
+        update_credit_button.bind('<Return>', 
+            lambda event: self.on_update_credit())
 
         show_transactions_button = ttk.Button(self.search_frame, 
                 text="Transaction History", 
                 command=self.on_transactions)
-        show_transactions_button.grid(column=2, row=6, columnspan=1, sticky='ew')
-        show_transactions_button.bind('<Return>', lambda event: self.on_transactions())
+        show_transactions_button.grid(column=2, 
+            row=6, 
+            columnspan=1, 
+            sticky='ew')
+        show_transactions_button.bind('<Return>', 
+            lambda event: self.on_transactions())
 
         delete_button = ttk.Button(self.search_frame, text="Delete", 
                 command=self.on_delete)
@@ -386,36 +439,11 @@ class BusinessApp:
                     tags=(status_tag,))
             
 
-    #def on_dropdown_selected(event):
-    #    sort_order = sort_dropdown.get()
-    #    self.on_sort_selected(sort_order)
-    #    sort_dropdown.destroy()  
-
-
-
-    # TODO: Refactor filtering and sorting to clean the code up
-    #def on_sort_selected(self, sort_order):
-    #    """Handles the sorting based on the combobox selection"""
-    #    #selected_sort = event.widget.get()
-
-    #    if sort_order == "Sort by Last Name (A-Z)":
-    #        # Sort the members alphabetically by last name
-    #        self.members = sorted(self.members, key=lambda x: x[2].lower())
-    #    elif sort_order == "Sort by Last Name (Z-A)":
-    #        # Sort the members in reverse alphabetical order
-    #        self.members = sorted(self.members, key=lambda x: x[2].lower(),                reverse=True)
-
-        # Clear the Treeview and display the sorted members
-    #    for row in self.tree.get_children():
-    #        self.tree.delete(row)
-
-    #    self.display_members(self.members)
-    
-
     def on_transactions(self):
         selected_item = self.tree.selection()
         if not selected_item:
-            messagebox.showwarning("No selection", "Please select a member to check.")
+            messagebox.showwarning("No selection", 
+                "Please select a member to check.")
             return
 
         selected_member = self.tree.item(selected_item)['values']
@@ -456,13 +484,15 @@ class BusinessApp:
         # Bind the right-click event to show the context menu
         tran_tree.bind("<Button-3>", self.show_right_click_menu)
         tran_context_menu = tk.Menu(self.root, tearoff=0)
-        tran_context_menu.add_command(label="Copy", command=self.copy_to_clipboard)
+        tran_context_menu.add_command(label="Copy", 
+            command=self.copy_to_clipboard)
 
 
     def on_update_credit(self):
         selected_item = self.tree.selection()
         if not selected_item:
-            messagebox.showwarning("No selection", "Please select a member to update.")
+            messagebox.showwarning("No selection", 
+                "Please select a member to update.")
             return
 
         selected_member = self.tree.item(selected_item)['values']
@@ -501,7 +531,8 @@ class BusinessApp:
                         updated_amount,
                         add_description)
             
-                messagebox.showinfo("Success", "Member credit updated successfully!")
+                messagebox.showinfo("Success", 
+                    "Member credit updated successfully!")
                 update_credit_window.destroy()  
                 self.search_window.destroy()
                 if self.search_all_flag:
@@ -510,7 +541,8 @@ class BusinessApp:
                     self.on_search()
             
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to update credit: {e}")
+                messagebox.showerror("Error", 
+                    f"Failed to update credit: {e}")
         
         
         update_credit_button = ttk.Button(update_credit_frame, 
@@ -523,7 +555,8 @@ class BusinessApp:
     def on_update_member(self):
         selected_item = self.tree.selection()
         if not selected_item:
-            messagebox.showwarning("No selection", "Please select a member to update.")
+            messagebox.showwarning("No selection", 
+                "Please select a member to update.")
             return
 
         selected_member = self.tree.item(selected_item)['values']
@@ -617,7 +650,6 @@ class BusinessApp:
 
             # Check for updates in the fields
             if not has_fields_updated(updated_data, original_data):
-                print("No fields have been updated, skipping duplicate check")
                 return
 
             # Perform duplicate check
@@ -627,14 +659,17 @@ class BusinessApp:
             # Update member data in the database
             try:
                 update_member_in_db(updated_data)
-                messagebox.showinfo("Success", "Member data updated successfully!")
+                messagebox.showinfo("Success", 
+                    "Member data updated successfully!")
                 close_windows_and_refresh()
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to update member: {e}")
+                messagebox.showerror("Error", 
+                    f"Failed to update member: {e}")
 
         def validate_required_fields(updated_data):
             if updated_data['first_name'] == "" or updated_data['last_name'] == "" or updated_data['phone_number'] == "":
-                messagebox.showerror("Error", "Please fill required fields (First Name, Last Name, Phone Number)")
+                messagebox.showerror("Error", 
+                    "Please fill required fields (First Name, Last Name, Phone Number)")
                 return False
             return True
 
@@ -651,8 +686,9 @@ class BusinessApp:
             for member in member_check_tuple:
                 if member[0] != member_id and (
                     (updated_data['first_name'] == member[1] and updated_data['last_name'] == member[2]) or updated_data['phone_number'] == member[3]):
-                    confirm = messagebox.askyesno("Warning!", "Member name or phone number exists!\nContinue?")
-                    return not confirm  # return False if user cancels (stopping update)
+                    confirm = messagebox.askyesno("Warning!", 
+                        "Member name or phone number exists!\nContinue?")
+                    return not confirm 
             return False
 
         def update_member_in_db(updated_data):
@@ -686,7 +722,8 @@ class BusinessApp:
     def on_delete(self):
         selected_item = self.tree.selection()
         if not selected_item:
-            messagebox.showwarning("No selection", "Please select a member to delete.")
+            messagebox.showwarning("No selection", 
+                "Please select a member to delete.")
             return
 
         selected_member = self.tree.item(selected_item)['values']
@@ -701,7 +738,8 @@ class BusinessApp:
             try:
                 self.db.delete_member(member_id)
 
-                messagebox.showinfo("Success", "Member data deleted successfully!")
+                messagebox.showinfo("Success", 
+                    "Member data deleted successfully!")
                 self.search_window.destroy()
                 if self.search_all_flag:
                     self.on_search_all()
@@ -709,7 +747,8 @@ class BusinessApp:
                     self.on_search()
 
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to delete member: {e}")
+                messagebox.showerror("Error", 
+                    f"Failed to delete member: {e}")
 
 
     def add_member_window(self):
@@ -729,7 +768,8 @@ class BusinessApp:
         last_name_entry = ttk.Entry(add_mem_frame)
         last_name_entry.grid(column=1, row=1)
 
-        phone_number_field = ttk.Label(add_mem_frame, text="Phone Number: ")
+        phone_number_field = ttk.Label(add_mem_frame, 
+            text="Phone Number: ")
         phone_number_field.grid(column=0, row=2, sticky=W)
         phone_number_entry = ttk.Entry(add_mem_frame)
         phone_number_entry.grid(column=1, row=2)
@@ -739,22 +779,28 @@ class BusinessApp:
         email_entry = ttk.Entry(add_mem_frame)
         email_entry.grid(column=1, row=3)
         
-        member_start_field = ttk.Label(add_mem_frame, text="Member Start: ")
+        member_start_field = ttk.Label(add_mem_frame, 
+            text="Member Start: ")
         member_start_field.grid(column=0, row=4, sticky=W)
-        member_start_entry = DateEntry(add_mem_frame, date_pattern='yyyy-mm-dd')
+        member_start_entry = DateEntry(add_mem_frame, 
+            date_pattern='yyyy-mm-dd')
         member_start_entry.grid(column=1, row=4)
         
-        member_expire_field = ttk.Label(add_mem_frame, text="Member Expire: ")
+        member_expire_field = ttk.Label(add_mem_frame, 
+            text="Member Expire: ")
         member_expire_field.grid(column=0, row=5, sticky=W)
-        member_expire_entry = DateEntry(add_mem_frame, date_pattern='yyyy-mm-dd')
+        member_expire_entry = DateEntry(add_mem_frame, 
+            date_pattern='yyyy-mm-dd')
         member_expire_entry.grid(column=1, row=5)
         
-        store_credit_field = ttk.Label(add_mem_frame, text="Store Credit: ")
+        store_credit_field = ttk.Label(add_mem_frame, 
+            text="Store Credit: ")
         store_credit_field.grid(column=0, row=6, sticky=W)
         store_credit_entry = ttk.Entry(add_mem_frame)
         store_credit_entry.grid(column=1, row=6)
        
-        member_type_field = ttk.Label(add_mem_frame, text="Membership Type: ")
+        member_type_field = ttk.Label(add_mem_frame, 
+            text="Membership Type: ")
         member_type_field.grid(column=0, row=7, sticky=W)
         member_type_entry = ttk.Entry(add_mem_frame)
         member_type_entry.grid(column=1, row=7)
@@ -806,7 +852,8 @@ class BusinessApp:
                             store_credit,
                             member_type.lower())
                     
-                    messagebox.showinfo("Success", "Member added successfully")
+                    messagebox.showinfo("Success", 
+                        "Member added successfully")
                     
                     # Clear form
                     first_name_entry.delete(0, tk.END)
@@ -819,25 +866,30 @@ class BusinessApp:
                     member_type_entry.delete(0, tk.END)
                 
                 except errors.InvalidTextRepresentation:
-                    messagebox.showerror("Error", "Please fill required fields (First Name, Last Name, Phone Number)")
+                    messagebox.showerror("Error", 
+                        "Please fill required fields (First Name, Last Name, Phone Number)")
                 except Exception as e:
-                    messagebox.showerror("Error", f"Failed to add member: {e}")
+                    messagebox.showerror("Error", 
+                        f"Failed to add member: {e}")
 
 
-        submit_button = ttk.Button(add_mem_frame, text="Submit", command=on_submit)
+        submit_button = ttk.Button(add_mem_frame, text="Submit", 
+            command=on_submit)
         submit_button.grid(column=1, row=8)
         submit_button.bind('<Return>', lambda event: on_submit())
 
         close_button = ttk.Button(add_mem_frame, text='Close', 
                 command=add_mem_window.destroy)
         close_button.grid(column=0, row=8)
-        close_button.bind('<Return>', lambda even: add_mem_window.destroy())
+        close_button.bind('<Return>', 
+            lambda even: add_mem_window.destroy())
     
 
     def view_profile(self):
         selected_item = self.tree.selection()
         if not selected_item:
-            messagebox.showwarning("No selection", "Please select a member profile to view.")
+            messagebox.showwarning("No selection", 
+                "Please select a member profile to view.")
             return
 
         selected_member = self.tree.item(selected_item)['values']
