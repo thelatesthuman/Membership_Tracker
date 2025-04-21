@@ -180,7 +180,8 @@ class Database:
     def get_user_by_username(self, username):
         conn = self.connect()
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE username = %s;", (username,))
+        cur.execute("SELECT * FROM users WHERE username = %s;", 
+            (username,))
         user = cur.fetchone()
         cur.close()
         conn.close()
@@ -217,7 +218,7 @@ class Database:
         conn.close()
         return count > 0
 
-    
+
     # Get the user's role for authorization purposes
     def get_user_role(self, username):
             conn = self.connect()
@@ -230,7 +231,18 @@ class Database:
             if role:
                 return role[0]
             else:
-                return None 
+                return None
+    
+
+    # Change user's password
+    def change_user_password(self, username, pass_hash):
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute("""UPDATE users
+        SET pass_hash = %s 
+        WHERE username = %s;""", (pass_hash,  username))
+        conn.commit()
+        conn.close()
 
 
     # Search for all members
