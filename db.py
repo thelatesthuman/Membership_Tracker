@@ -189,7 +189,7 @@ class Database:
     
 
     # Create a new user
-    def create_user(self, username, hashed_password, salt, role):
+    def create_user(self, username, pass_hash, salt, role):
         conn = self.connect()
         cur = conn.cursor()
 
@@ -197,7 +197,7 @@ class Database:
             cur.execute("""
                 INSERT INTO users (username, pass_hash, salt, role)
                 VALUES (%s, %s, %s, %s);
-            """, (username, hashed_password.decode('utf-8'), salt.decode('utf-8'), role))
+            """, (username, pass_hash.decode('utf-8'), salt.decode('utf-8'), role))
 
             conn.commit()
         except psycopg2.IntegrityError:
@@ -235,12 +235,13 @@ class Database:
     
 
     # Change user's password
-    def change_user_password(self, username, pass_hash):
+    def change_user_password(self, username, pass_hash, salt):
         conn = self.connect()
         cur = conn.cursor()
         cur.execute("""UPDATE users
-        SET pass_hash = %s 
-        WHERE username = %s;""", (pass_hash,  username))
+        SET pass_hash = %s, salt = %s
+        WHERE username = %s;""", (pass_hash.decode('utf-8'), 
+            salt.decode('utf-8'),  username))
         conn.commit()
         conn.close()
 

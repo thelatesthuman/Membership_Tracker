@@ -8,8 +8,8 @@ class Authentication:
     def hash_password(self, password):
         # Generate a salt and hash the password with the salt
         salt = bcrypt.gensalt()
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
-        return hashed_password, salt
+        pass_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
+        return pass_hash, salt
 
 
     def check_password_policy(self, username, password):

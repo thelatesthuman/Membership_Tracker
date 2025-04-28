@@ -70,6 +70,77 @@ class BusinessApp:
                     messagebox.showerror("Error", 
                         f"Failed to import data: {str(e)}")
         
+        def change_password():
+            change_password_window = Toplevel(self.root)
+            change_password_window.title("Change User Password")
+
+            change_password_frame = ttk.Frame(change_password_window, 
+                padding=100)
+            change_password_frame.grid()
+            
+            def change_password_action(original_password, 
+                update_password, 
+                confirm_password):
+                from db import Database
+                from auth import Authentication
+                
+                db = Database()
+                auth = Authentication()
+                user = self.current_user
+
+                if auth.authenticate_user(user, 
+                    original_password):
+                    if update_password == confirm_password:
+                        try:
+                            pass_hash, salt = auth.hash_password(update_password)
+                            db.change_user_password(user, pass_hash, salt)
+                            messagebox.showinfo("Success", 
+                                "Password updated successfully")
+                            change_password_window.destroy()
+                         
+                        except Exception as e:
+                            messagebox.showerror("Error", 
+                                f"Failed to change password: {e}")
+                    else:
+                        messagebox.showerror("Error",
+                            f"Password don't match")
+                else:
+                    messagebox.showerror("Error",
+                        f"Authentication failed")
+                            
+            original_password_field = ttk.Label(change_password_frame, 
+                    text="Original Password: ")
+            original_password_field.grid(column=0, row=0, sticky=W)
+            original_password_entry = ttk.Entry(change_password_frame,
+                show="*")
+            original_password_entry.grid(column=1, row=0)
+            
+            update_password_field = ttk.Label(change_password_frame, 
+                    text="Update Password: ")
+            update_password_field.grid(column=0, row=1, sticky=W)
+            update_password_entry = ttk.Entry(change_password_frame,
+                show="*")
+            update_password_entry.grid(column=1, row=1)
+            
+            confirm_password_field = ttk.Label(change_password_frame, 
+                    text="Confirm Password: ")
+            confirm_password_field.grid(column=0, row=2, sticky=W)
+            confirm_password_entry = ttk.Entry(change_password_frame,
+                show="*")
+            confirm_password_entry.grid(column=1, row=2)
+
+            change_password_window_button = ttk.Button(change_password_frame, 
+                text="Change Password", 
+                command=lambda: change_password_action(original_password_entry.get(),
+                    update_password_entry.get(),
+                    confirm_password_entry.get()))
+            change_password_window_button.grid(column=1, row=3, 
+                sticky="ew")
+            change_password_window_button.bind('<Return>', 
+                lambda event: change_password_action(original_password_entry.get(), 
+                    update_password_entry.get(), 
+                    confirm_password_entry.get()))
+                
 
         def close_app():
             self.root.destroy()
@@ -91,6 +162,8 @@ class BusinessApp:
         
         file_menu.add_cascade(label="Import", menu=import_menu)
         file_menu.add_cascade(label="Export", menu=export_menu)
+        file_menu.add_command(label="Change Password",
+            command=change_password)
         file_menu.add_command(label="Close", command=close_app)
         menu_bar.add_cascade(label="File", menu=file_menu)
         
