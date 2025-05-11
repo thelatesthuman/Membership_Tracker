@@ -997,7 +997,7 @@ class BusinessApp:
         if photo_data:
             # Convert photo data (binary) to an image object
             photo_image = Image.open(BytesIO(photo_data))
-            photo_image = photo_image.resize((200, 200))  # Resize to fit the profile window (optional)
+            photo_image = photo_image.resize((200, 200))
             photo = ImageTk.PhotoImage(photo_image)
         else:
             # Set a default photo if no photo is found
@@ -1082,18 +1082,63 @@ class BusinessApp:
         #self.view_profile_window.after(100, 
         #    self.view_profile_window.focus_set())
         #self.view_profile_window.grab_set()
-        self.view_profile_window.lift()
-        self.view_profile_window.focus_force()
+        #self.view_profile_window.lift()
+        #self.view_profile_window.focus_force()
 
 
     def update_photo(self, member_id):
+        import imghdr
+        from PIL import Image
+        import io
+
+        MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
+
+        def sanitize_uploaded_image(file_bytes: bytes) -> bytes:
+            """
+            Validates and sanitizes an uploaded image.
+            - Ensures it's JPEG or PNG.
+            - Checks that it's under MAX_IMAGE_SIZE.
+            - Re-saves it using Pillow to strip malicious data and normalize the format.
+
+            Returns:
+                Sanitized image bytes.
+
+            Raises:
+                ValueError: If the image is invalid, too large, or unsupported.
+            """
+
+            # Step 1: Check size
+            if len(file_bytes) > MAX_IMAGE_SIZE:
+                raise ValueError("Image exceeds size limit of 5MB.")
+
+            # Step 2: Check file type using actual content (not extension)
+            file_type = imghdr.what(None, h=file_bytes)
+            if file_type not in ('jpeg', 'png'):
+                raise ValueError("Unsupported image type. Only JPEG and PNG are allowed.")
+
+            # Step 3: Use Pillow to sanitize and re-save
+            try:
+                image = Image.open(io.BytesIO(file_bytes))
+                image.verify()  # Ensure file is not corrupted or spoofed
+
+                # Reopen for re-saving (Pillow discards loaded image after verify)
+                image = Image.open(io.BytesIO(file_bytes))
+
+                sanitized_io = io.BytesIO()
+                image_format = 'JPEG' if file_type == 'jpeg' else 'PNG'
+                image.save(sanitized_io, format=image_format)
+
+                return sanitized_io.getvalue()
+            except Exception as e:
+                raise ValueError("Invalid or corrupted image file.") from e
+
+
         # Open file dialog to choose a new photo
         file_path = filedialog.askopenfilename(
             title="Select an Image File",
             filetypes=[("JPEG files", "*.jpg"),
                   ("JPEG files", "*.jpeg"), 
                   ("PNG files", "*.png"), 
-                  ("GIF files", "*.gif"), 
                   ("All Image Files", "*.*")]
         )
         if not file_path:
@@ -1102,8 +1147,8 @@ class BusinessApp:
         try:
             # Open the image and convert it to binary data
             with open(file_path, 'rb') as f:
-                photo_data = f.read()
-
+                photo_data = sanitize_uploaded_image(f.read())
+        
             # Store the new photo in the database
             db = Database()
             db.update_member_photo(member_id, photo_data)
