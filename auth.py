@@ -5,6 +5,9 @@ from tkinter import ttk, messagebox
 
 
 class Authentication:
+    def __init__(self, root):
+        self.root = root
+
     def hash_password(self, password):
         # Generate a salt and hash the password with the salt
         salt = bcrypt.gensalt()
@@ -69,37 +72,36 @@ class Authentication:
             password = entry_password.get()
 
             if self.authenticate_user(username, password):
-                messagebox.showinfo("Welcome", f"Welcome, {username}!")
-                root.destroy()  # Close the window after successful login
+                messagebox.showinfo("Welcome", f"Welcome, {username}!",
+                    parent=login_win)
+                login_win.destroy()  
                 
                 from membership_tracker import BusinessApp
-                add_mem_root = tk.Tk()
-                self.app = BusinessApp(add_mem_root, username)
-                self.app.__init__
+                self.app = BusinessApp(self.root, username)
             else:
                 messagebox.showerror("Authentication Failed", 
-                        "Incorrect username or password.")
+                        "Incorrect username or password.",
+                        parent=login_win)
 
-        root = tk.Tk()
-        root.title("Login")
-        
-        frm = ttk
 
-        ttk.Label(root, text="Username").pack(padx=10, pady=5)
-        entry_username = ttk.Entry(root)
+        login_win = tk.Toplevel(self.root)
+        login_win.title("Login")
+
+        ttk.Label(login_win, text="Username").pack(padx=10, pady=5)
+        entry_username = ttk.Entry(login_win)
         entry_username.pack(padx=10, pady=5)
 
-        ttk.Label(root, text="Password").pack(padx=10, pady=5)
-        entry_password = ttk.Entry(root, show="*")
+        ttk.Label(login_win, text="Password").pack(padx=10, pady=5)
+        entry_password = ttk.Entry(login_win, show="*")
         entry_password.pack(padx=10, pady=5)
-
-        ttk.Button(root, text="Login", 
+        
+        ttk.Button(login_win, text="Login", 
             command=login_action).pack(padx=10, pady=20)
-        root.bind('<Return>', lambda event: login_action())
-        root.mainloop()
+        login_win.bind('<Return>', lambda event: login_action())
+        login_win.protocol("WM_DELETE_WINDOW", self.root.destroy)
 
 
-    def create_user_form(self):
+    def create_user_form(self, startup=False):
         def create_user_action():
             from db import Database
             db = Database()
@@ -114,37 +116,42 @@ class Authentication:
             # Check if username exists
             if db.get_user_by_username(username):
                 messagebox.showerror("Error", "Username already in use!")
-                root.lift()
-                root.focus_force()
+                create_user_win.lift()
+                create_user_win.focus_force()
                 return
             
             # Check password confirmation for match
             if password != confirm_password:
                 messagebox.showerror("Error", "Passwords do not match!")
-                root.lift()
-                root.focus_force()
+                create_user_win.lift()
+                create_user_win.focus_force()
                 return
 
             # Check password against password policy
             if not self.check_password_policy(username, password):
-                root.lift()
-                root.focus_force()
+                create_user_win.lift()
+                create_user_win.focus_force()
                 return
 
             try:
                 db.create_user(username, hashed_password, salt, role)
                 messagebox.showinfo("Success", "New user created!")
-                root.destroy()  # Close the window after user creation
+                create_user_win.destroy()
+
+                if startup:
+                    from membership_tracker import BusinessApp
+                    self.app = BusinessApp(self.root, username)
             except Exception as e:
                 messagebox.showerror("Error", e)
 
-        root = tk.Tk()
-        root.title("Create User")
-        
-        root.grid_rowconfigure(0, weight=1)
-        root.grid_columnconfigure(0,weight=1)
 
-        frm = ttk.Frame(root, padding=40)
+        create_user_win = tk.Toplevel(self.root)
+        create_user_win.title("Create User")
+        
+        create_user_win.grid_rowconfigure(0, weight=1)
+        create_user_win.grid_columnconfigure(0,weight=1)
+
+        frm = ttk.Frame(create_user_win, padding=40)
         frm.grid(sticky='nsew')
 
         username_label = ttk.Label(frm, text="Username")
@@ -172,4 +179,3 @@ class Authentication:
         create_user_button.grid(column=1, row=4, sticky='w')
         create_user_button.bind('<Return>',
                 lambda event: create_user_action())
-        root.mainloop()

@@ -31,12 +31,15 @@ class BusinessApp:
         self.is_admin = self.db.get_user_role(self.current_user) == 'admin' 
 
         self.root = root
-        self.root.title("Memberships")
+        self.member_search_win = tk.Toplevel(self.root)
+        self.member_search_win.title("Memberships")
        
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
+        self.member_search_win.grid_rowconfigure(0, weight=1)
+        self.member_search_win.grid_columnconfigure(0, weight=1)
+        self.member_search_win.protocol("WM_DELETE_WINDOW", 
+            self.root.destroy)
 
-        self.frm = ttk.Frame(root, padding=200)
+        self.frm = ttk.Frame(self.member_search_win, padding=200)
         self.frm.grid(sticky="nsew")
 
         def export_data(data_type):
@@ -71,7 +74,7 @@ class BusinessApp:
                         f"Failed to import data: {str(e)}")
         
         def change_password():
-            change_password_window = Toplevel(self.root)
+            change_password_window = Toplevel(self.member_search_win)
             change_password_window.title("Change User Password")
 
             change_password_frame = ttk.Frame(change_password_window, 
@@ -85,7 +88,7 @@ class BusinessApp:
                 from auth import Authentication
                 
                 db = Database()
-                auth = Authentication()
+                auth = Authentication(self.root)
                 user = self.current_user
 
                 if auth.authenticate_user(user, 
@@ -145,7 +148,7 @@ class BusinessApp:
         def close_app():
             self.root.destroy()
 
-        menu_bar = tk.Menu(root)
+        menu_bar = tk.Menu(self.member_search_win)
         
         file_menu = tk.Menu(menu_bar, tearoff=0)
         export_menu = tk.Menu(file_menu, tearoff=0)
@@ -167,7 +170,7 @@ class BusinessApp:
         file_menu.add_command(label="Close", command=close_app)
         menu_bar.add_cascade(label="File", menu=file_menu)
         
-        root.config(menu=menu_bar)
+        self.member_search_win.config(menu=menu_bar)
     
         for i in range(7):
             self.frm.grid_rowconfigure(i, weight=1)
@@ -223,7 +226,7 @@ class BusinessApp:
         self.create_user_button = None
         if self.is_admin:
             from auth import Authentication
-            auth = Authentication()
+            auth = Authentication(self.member_search_win)
             self.create_user_button = tk.Button(self.frm, 
                     text="Create User", 
                     command=auth.create_user_form)
@@ -275,7 +278,7 @@ class BusinessApp:
             phone_number=None, 
             search_all=False):
 
-        self.search_window = Toplevel(self.root)
+        self.search_window = Toplevel(self.member_search_win)
         self.search_window.title("Member Info")
         self.search_window.geometry("1700x500")
 
@@ -825,7 +828,7 @@ class BusinessApp:
 
 
     def add_member_window(self):
-        add_mem_window = Toplevel(self.root)
+        add_mem_window = Toplevel(self.member_search_win)
         add_mem_window.title("Add Member")
 
         add_mem_frame = ttk.Frame(add_mem_window, padding=300)
