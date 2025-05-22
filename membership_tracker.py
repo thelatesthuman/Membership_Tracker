@@ -32,7 +32,7 @@ class BusinessApp:
 
         self.root = root
         self.member_search_win = tk.Toplevel(self.root)
-        self.member_search_win.title("Memberships")
+        self.member_search_win.title("Membership Tracker")
        
         self.member_search_win.grid_rowconfigure(0, weight=1)
         self.member_search_win.grid_columnconfigure(0, weight=1)
@@ -74,13 +74,6 @@ class BusinessApp:
                         f"Failed to import data: {str(e)}")
         
         def change_password():
-            change_password_window = Toplevel(self.member_search_win)
-            change_password_window.title("Change User Password")
-
-            change_password_frame = ttk.Frame(change_password_window, 
-                padding=100)
-            change_password_frame.grid()
-            
             def change_password_action(original_password, 
                 update_password, 
                 confirm_password):
@@ -110,7 +103,15 @@ class BusinessApp:
                 else:
                     messagebox.showerror("Error",
                         f"Authentication failed")
-                            
+            
+
+            change_password_window = Toplevel(self.member_search_win)
+            change_password_window.title("Change User Password")
+
+            change_password_frame = ttk.Frame(change_password_window, 
+                padding=100)
+            change_password_frame.grid()
+            
             original_password_field = ttk.Label(change_password_frame, 
                     text="Original Password: ")
             original_password_field.grid(column=0, row=0, sticky=W)
@@ -172,11 +173,11 @@ class BusinessApp:
         
         self.member_search_win.config(menu=menu_bar)
     
-        for i in range(7):
-            self.frm.grid_rowconfigure(i, weight=1)
+        #for i in range(7):
+        #    self.frm.grid_rowconfigure(i, weight=1)
         
-        for i in range(3):
-            self.frm.grid_columnconfigure(i, weight=1)
+        #for i in range(3):
+        #    self.frm.grid_columnconfigure(i, weight=1)
 
         bold_font = font.nametofont("TkDefaultFont")
         bold_font.actual()["weight"] = "bold"
@@ -214,7 +215,6 @@ class BusinessApp:
         self.search_all_button.bind('<Return>', 
             lambda event: self.on_search_all())
         
-
         self.add_mem_window_button = ttk.Button(self.frm, 
             text="Add Member", 
             command=self.add_member_window)
@@ -222,7 +222,6 @@ class BusinessApp:
         self.add_mem_window_button.bind('<Return>', 
             lambda event: self.add_member_window())
         
-
         self.create_user_button = None
         if self.is_admin:
             from auth import Authentication
@@ -366,6 +365,7 @@ class BusinessApp:
             show="headings")
         self.tree.grid(column=0, row=4, columnspan=5, sticky="nsew")
 
+        # Structure tree and buttons
         self.search_frame.grid_rowconfigure(4, weight=1)
         self.search_frame.grid_columnconfigure(0, weight=1)
         self.search_frame.grid_columnconfigure(1, weight=1)
@@ -379,7 +379,8 @@ class BusinessApp:
         self.tree.tag_configure('not active', 
             font=('Ariel', 10, 'bold'), 
             foreground='red')
-        
+       
+        # Keep columns from exceeding window size
         self.tree.column('#1', minwidth=100, width=100)
         self.tree.column('#2', minwidth=100, width=100)
         self.tree.column('#3', minwidth=100, width=100)
@@ -458,12 +459,14 @@ class BusinessApp:
             key=lambda x: x[2].lower())
         self.display_search_results(self.members)
 
+
     def sort_last_name_descending(self):
         # Sort members by last name in descending order (Z-A)
         self.sort_order = False
         self.members = sorted(self.members, 
             key=lambda x: x[2].lower(), reverse=True)
         self.display_search_results(self.members)
+
 
     def member_type_filter(self, membership_filter):
         self.filtered_members = self.members
@@ -565,33 +568,6 @@ class BusinessApp:
 
 
     def on_update_credit(self):
-        selected_item = self.tree.selection()
-        if not selected_item:
-            messagebox.showwarning("No selection", 
-                "Please select a member to update.")
-            return
-
-        selected_member = self.tree.item(selected_item)['values']
-        member_id = selected_member[0]
-
-        update_credit_window = Toplevel(self.search_window)
-        update_credit_window.title("Update Member Credit")
-
-        update_credit_frame = ttk.Frame(update_credit_window, padding=100)
-        update_credit_frame.grid()
-        
-        update_amount_field = ttk.Label(update_credit_frame, 
-                text="Update Amount: ")
-        update_amount_field.grid(column=0, row=0, sticky=W)
-        update_amount_entry = ttk.Entry(update_credit_frame)
-        update_amount_entry.grid(column=1, row=0)
-        
-        add_description_field = ttk.Label(update_credit_frame, 
-                text="Add Description: ")
-        add_description_field.grid(column=0, row=1, sticky=W)
-        add_description_entry = ttk.Entry(update_credit_frame)
-        add_description_entry.grid(column=1, row=1)
-
         def apply_update():
             updated_amount = update_amount_entry.get()
             add_description = add_description_entry.get()
@@ -620,15 +596,137 @@ class BusinessApp:
                 messagebox.showerror("Error", 
                     f"Failed to update credit: {e}")
         
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No selection", 
+                "Please select a member to update.")
+            return
+
+        selected_member = self.tree.item(selected_item)['values']
+        member_id = selected_member[0]
+
+        update_credit_window = Toplevel(self.search_window)
+        update_credit_window.title("Update Member Credit")
+
+        update_credit_frame = ttk.Frame(update_credit_window, padding=100)
+        update_credit_frame.grid()
         
+        update_amount_field = ttk.Label(update_credit_frame, 
+                text="Update Amount: ")
+        update_amount_field.grid(column=0, row=0, sticky=W)
+        update_amount_entry = ttk.Entry(update_credit_frame)
+        update_amount_entry.grid(column=1, row=0)
+        
+        add_description_field = ttk.Label(update_credit_frame, 
+                text="Add Description: ")
+        add_description_field.grid(column=0, row=1, sticky=W)
+        add_description_entry = ttk.Entry(update_credit_frame)
+        add_description_entry.grid(column=1, row=1)
+ 
         update_credit_button = ttk.Button(update_credit_frame, 
                 text="Update", 
                 command=apply_update)
         update_credit_button.grid(column=1, row=6)
-        update_credit_button.bind('<Return>', lambda event: apply_update())
+        update_credit_button.bind('<Return>', 
+            lambda event: apply_update())
 
     # Function to allow for data editing
     def on_update_member(self):
+        def apply_update():
+            # Collect updated data
+            updated_data = {
+                'first_name': update_first_name_entry.get().strip(),
+                'last_name': update_last_name_entry.get().strip(),
+                'phone_number': update_phone_number_entry.get().strip(),
+                'email': update_email_entry.get(),
+                'member_start': update_member_start_entry.get(),
+                'member_expire': update_member_expire_entry.get(),
+                'member_type': update_member_type_entry.get().lower()
+            }
+
+            # Validate required fields
+            if not validate_required_fields(updated_data):
+                return
+
+            original_data = {
+                'member_id': selected_member[0],    
+                'first_name': selected_member[1],
+                'last_name': selected_member[2],
+                'phone_number': str(selected_member[3]),
+                'email': selected_member[4],
+                'member_start': selected_member[5],
+                'member_expire': selected_member[6],
+                'member_type': selected_member[7]
+            }
+
+            # Check for updates in the fields
+            if not has_fields_updated(updated_data, original_data):
+                return
+
+            # Perform duplicate check
+            if is_duplicate(updated_data):
+                return
+
+            # Update member data in the database
+            try:
+                update_member_in_db(updated_data)
+                messagebox.showinfo("Success", 
+                    "Member data updated successfully!")
+                close_windows_and_refresh()
+            except Exception as e:
+                messagebox.showerror("Error", 
+                    f"Failed to update member: {e}")
+
+
+        def validate_required_fields(updated_data):
+            if updated_data['first_name'] == "" or updated_data['last_name'] == "" or updated_data['phone_number'] == "":
+                messagebox.showerror("Error", 
+                    "Please fill required fields (First Name, Last Name, Phone Number)")
+                return False
+            return True
+
+
+        def has_fields_updated(updated_data, original_data):
+            return (updated_data['first_name'].lower() != original_data['first_name'].lower() or updated_data['last_name'].lower() != original_data['last_name'].lower() or updated_data['phone_number'] != original_data['phone_number'] or updated_data['email'] != original_data['email'] or updated_data['member_start'] != original_data['member_start'] or updated_data['member_expire'] != original_data['member_expire'] or updated_data['member_type'] != original_data['member_type'])
+
+
+        def is_duplicate(updated_data):
+            member_check_tuple = self.db.search_members(
+                updated_data['first_name'].lower(),
+                updated_data['last_name'].lower(),
+                updated_data['phone_number']
+            )
+
+            for member in member_check_tuple:
+                if member[0] != member_id and (
+                    (updated_data['first_name'] == member[1] and updated_data['last_name'] == member[2]) or updated_data['phone_number'] == member[3]):
+                    confirm = messagebox.askyesno("Warning!", 
+                        "Member name or phone number exists!\nContinue?")
+                    return not confirm 
+            return False
+
+
+        def update_member_in_db(updated_data):
+            self.db.update_member(
+                member_id,
+                updated_data['first_name'],
+                updated_data['last_name'],
+                updated_data['phone_number'],
+                updated_data['email'],
+                updated_data['member_start'],
+                updated_data['member_expire'],
+                updated_data['member_type']
+            )
+
+
+        def close_windows_and_refresh():
+            update_member_window.destroy()
+            self.search_window.destroy()
+            if self.search_all_flag:
+                self.on_search_all()
+            else:
+                self.on_search()
+
         selected_item = self.tree.selection()
         if not selected_item:
             messagebox.showwarning("No selection", 
@@ -697,97 +795,6 @@ class BusinessApp:
         update_member_type_entry.insert(0, selected_member[8])
         update_member_type_entry.grid(column=1, row=6)
 
-        def apply_update():
-            # Collect updated data
-            updated_data = {
-                'first_name': update_first_name_entry.get().strip(),
-                'last_name': update_last_name_entry.get().strip(),
-                'phone_number': update_phone_number_entry.get().strip(),
-                'email': update_email_entry.get(),
-                'member_start': update_member_start_entry.get(),
-                'member_expire': update_member_expire_entry.get(),
-                'member_type': update_member_type_entry.get().lower()
-            }
-
-            # Validate required fields
-            if not validate_required_fields(updated_data):
-                return
-
-            original_data = {
-                'member_id': selected_member[0],    
-                'first_name': selected_member[1],
-                'last_name': selected_member[2],
-                'phone_number': str(selected_member[3]),
-                'email': selected_member[4],
-                'member_start': selected_member[5],
-                'member_expire': selected_member[6],
-                'member_type': selected_member[7]
-            }
-
-            # Check for updates in the fields
-            if not has_fields_updated(updated_data, original_data):
-                return
-
-            # Perform duplicate check
-            if is_duplicate(updated_data):
-                return
-
-            # Update member data in the database
-            try:
-                update_member_in_db(updated_data)
-                messagebox.showinfo("Success", 
-                    "Member data updated successfully!")
-                close_windows_and_refresh()
-            except Exception as e:
-                messagebox.showerror("Error", 
-                    f"Failed to update member: {e}")
-
-        def validate_required_fields(updated_data):
-            if updated_data['first_name'] == "" or updated_data['last_name'] == "" or updated_data['phone_number'] == "":
-                messagebox.showerror("Error", 
-                    "Please fill required fields (First Name, Last Name, Phone Number)")
-                return False
-            return True
-
-        def has_fields_updated(updated_data, original_data):
-            return (updated_data['first_name'].lower() != original_data['first_name'].lower() or updated_data['last_name'].lower() != original_data['last_name'].lower() or updated_data['phone_number'] != original_data['phone_number'] or updated_data['email'] != original_data['email'] or updated_data['member_start'] != original_data['member_start'] or updated_data['member_expire'] != original_data['member_expire'] or updated_data['member_type'] != original_data['member_type'])
-
-        def is_duplicate(updated_data):
-            member_check_tuple = self.db.search_members(
-                updated_data['first_name'].lower(),
-                updated_data['last_name'].lower(),
-                updated_data['phone_number']
-            )
-
-            for member in member_check_tuple:
-                if member[0] != member_id and (
-                    (updated_data['first_name'] == member[1] and updated_data['last_name'] == member[2]) or updated_data['phone_number'] == member[3]):
-                    confirm = messagebox.askyesno("Warning!", 
-                        "Member name or phone number exists!\nContinue?")
-                    return not confirm 
-            return False
-
-        def update_member_in_db(updated_data):
-            self.db.update_member(
-                member_id,
-                updated_data['first_name'],
-                updated_data['last_name'],
-                updated_data['phone_number'],
-                updated_data['email'],
-                updated_data['member_start'],
-                updated_data['member_expire'],
-                updated_data['member_type']
-            )
-
-        def close_windows_and_refresh():
-            update_member_window.destroy()
-            self.search_window.destroy()
-            if self.search_all_flag:
-                self.on_search_all()
-            else:
-                self.on_search()
-
-
         update_button = ttk.Button(update_member_frame, 
                 text="Update", 
                 command=apply_update)
@@ -828,59 +835,6 @@ class BusinessApp:
 
 
     def add_member_window(self):
-        add_mem_window = Toplevel(self.member_search_win)
-        add_mem_window.title("Add Member")
-
-        add_mem_frame = ttk.Frame(add_mem_window, padding=300)
-        add_mem_frame.grid()
-
-        first_name_field = ttk.Label(add_mem_frame, text="First Name: ")
-        first_name_field.grid(column=0, row=0, sticky=W)
-        first_name_entry = ttk.Entry(add_mem_frame)
-        first_name_entry.grid(column=1, row=0)
-        
-        last_name_field = ttk.Label(add_mem_frame, text="Last Name: ")
-        last_name_field.grid(column=0, row=1, sticky=W)
-        last_name_entry = ttk.Entry(add_mem_frame)
-        last_name_entry.grid(column=1, row=1)
-
-        phone_number_field = ttk.Label(add_mem_frame, 
-            text="Phone Number: ")
-        phone_number_field.grid(column=0, row=2, sticky=W)
-        phone_number_entry = ttk.Entry(add_mem_frame)
-        phone_number_entry.grid(column=1, row=2)
-        
-        email_field = ttk.Label(add_mem_frame, text="Email: ")
-        email_field.grid(column=0, row=3, sticky=W)
-        email_entry = ttk.Entry(add_mem_frame)
-        email_entry.grid(column=1, row=3)
-        
-        member_start_field = ttk.Label(add_mem_frame, 
-            text="Member Start: ")
-        member_start_field.grid(column=0, row=4, sticky=W)
-        member_start_entry = DateEntry(add_mem_frame, 
-            date_pattern='yyyy-mm-dd')
-        member_start_entry.grid(column=1, row=4)
-        
-        member_expire_field = ttk.Label(add_mem_frame, 
-            text="Member Expire: ")
-        member_expire_field.grid(column=0, row=5, sticky=W)
-        member_expire_entry = DateEntry(add_mem_frame, 
-            date_pattern='yyyy-mm-dd')
-        member_expire_entry.grid(column=1, row=5)
-        
-        store_credit_field = ttk.Label(add_mem_frame, 
-            text="Store Credit: ")
-        store_credit_field.grid(column=0, row=6, sticky=W)
-        store_credit_entry = ttk.Entry(add_mem_frame)
-        store_credit_entry.grid(column=1, row=6)
-       
-        member_type_field = ttk.Label(add_mem_frame, 
-            text="Membership Type: ")
-        member_type_field.grid(column=0, row=7, sticky=W)
-        member_type_entry = ttk.Entry(add_mem_frame)
-        member_type_entry.grid(column=1, row=7)
-
         def on_submit():
             first_name = first_name_entry.get()
             last_name = last_name_entry.get()
@@ -947,7 +901,60 @@ class BusinessApp:
                 except Exception as e:
                     messagebox.showerror("Error", 
                         f"Failed to add member: {e}")
+        
 
+        add_mem_window = Toplevel(self.member_search_win)
+        add_mem_window.title("Add Member")
+
+        add_mem_frame = ttk.Frame(add_mem_window, padding=300)
+        add_mem_frame.grid()
+
+        first_name_field = ttk.Label(add_mem_frame, text="First Name: ")
+        first_name_field.grid(column=0, row=0, sticky=W)
+        first_name_entry = ttk.Entry(add_mem_frame)
+        first_name_entry.grid(column=1, row=0)
+        
+        last_name_field = ttk.Label(add_mem_frame, text="Last Name: ")
+        last_name_field.grid(column=0, row=1, sticky=W)
+        last_name_entry = ttk.Entry(add_mem_frame)
+        last_name_entry.grid(column=1, row=1)
+
+        phone_number_field = ttk.Label(add_mem_frame, 
+            text="Phone Number: ")
+        phone_number_field.grid(column=0, row=2, sticky=W)
+        phone_number_entry = ttk.Entry(add_mem_frame)
+        phone_number_entry.grid(column=1, row=2)
+        
+        email_field = ttk.Label(add_mem_frame, text="Email: ")
+        email_field.grid(column=0, row=3, sticky=W)
+        email_entry = ttk.Entry(add_mem_frame)
+        email_entry.grid(column=1, row=3)
+        
+        member_start_field = ttk.Label(add_mem_frame, 
+            text="Member Start: ")
+        member_start_field.grid(column=0, row=4, sticky=W)
+        member_start_entry = DateEntry(add_mem_frame, 
+            date_pattern='yyyy-mm-dd')
+        member_start_entry.grid(column=1, row=4)
+        
+        member_expire_field = ttk.Label(add_mem_frame, 
+            text="Member Expire: ")
+        member_expire_field.grid(column=0, row=5, sticky=W)
+        member_expire_entry = DateEntry(add_mem_frame, 
+            date_pattern='yyyy-mm-dd')
+        member_expire_entry.grid(column=1, row=5)
+        
+        store_credit_field = ttk.Label(add_mem_frame, 
+            text="Store Credit: ")
+        store_credit_field.grid(column=0, row=6, sticky=W)
+        store_credit_entry = ttk.Entry(add_mem_frame)
+        store_credit_entry.grid(column=1, row=6)
+       
+        member_type_field = ttk.Label(add_mem_frame, 
+            text="Membership Type: ")
+        member_type_field.grid(column=0, row=7, sticky=W)
+        member_type_entry = ttk.Entry(add_mem_frame)
+        member_type_entry.grid(column=1, row=7)
 
         submit_button = ttk.Button(add_mem_frame, text="Submit", 
             command=on_submit)
@@ -1079,14 +1086,6 @@ class BusinessApp:
             text="Update Photo", 
             command=lambda: self.update_photo(selected_member[0]))
         update_photo_button.grid(column=1, row=14, columnspan=2)
-        
-        #self.view_profile_window.after(100, 
-        #    self.view_profile_window.lift())
-        #self.view_profile_window.after(100, 
-        #    self.view_profile_window.focus_set())
-        #self.view_profile_window.grab_set()
-        #self.view_profile_window.lift()
-        #self.view_profile_window.focus_force()
 
 
     def update_photo(self, member_id):
