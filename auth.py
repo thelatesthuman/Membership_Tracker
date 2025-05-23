@@ -1,5 +1,6 @@
 import re
 import bcrypt
+import logging
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -7,6 +8,7 @@ from tkinter import ttk, messagebox
 class Authentication:
     def __init__(self, root):
         self.root = root
+        self.logger = logging.getLogger(__name__)
 
     def hash_password(self, password):
         # Generate a salt and hash the password with the salt
@@ -72,6 +74,7 @@ class Authentication:
             password = entry_password.get()
 
             if self.authenticate_user(username, password):
+                self.logger.info("Authentication successful")
                 messagebox.showinfo("Welcome", f"Welcome, {username}!",
                     parent=login_win)
                 login_win.destroy()  
@@ -79,6 +82,7 @@ class Authentication:
                 from membership_tracker import BusinessApp
                 self.app = BusinessApp(self.root, username)
             else:
+                self.logger.warning("Authentication failed")
                 messagebox.showerror("Authentication Failed", 
                         "Incorrect username or password.",
                         parent=login_win)
