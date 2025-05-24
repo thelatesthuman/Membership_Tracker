@@ -74,7 +74,8 @@ class Authentication:
             password = entry_password.get()
 
             if self.authenticate_user(username, password):
-                self.logger.info("Authentication successful")
+                self.logger.info("Authentication successful: %s",
+                    (username))
                 messagebox.showinfo("Welcome", f"Welcome, {username}!",
                     parent=login_win)
                 login_win.destroy()  
